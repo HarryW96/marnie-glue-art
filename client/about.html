@@ -3,11 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>About — Studio</title>
+  <title>Marnie Glue — About</title>
+  <link rel="icon" type="image/png" href="/client/img/favicon.ico">
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/style.css" />
+  <meta name="description" content="" />
+  <meta property="og:site_name" content="Studio" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="" />
+  <meta property="og:description" content="" />
+  <meta property="og:image" content="" />
+  <meta property="og:url" content="" />
+  <meta name="twitter:card" content="summary_large_image" />
 </head>
 <body>
   <nav class="nav">
@@ -47,6 +56,7 @@
         <p id="about-bio">My practice sits at the intersection of the found and the formed — gathering materials that carry their own histories and allowing them to speak through structure and weight.</p>
         <p>There is something in the tension between fragility and permanence that drives my work. Clay remembers the pressure of a hand. Rust marks the passage of time. Fabric holds the shape of a body long absent. These residues become the subject.</p>
         <p>My studio is in the north of England, where the landscape — its coast, its industry, its layered geology — is an ever-present collaborator. I take commissions for private collections and am open to exhibition proposals.</p>
+        <div id="about-extra"></div>
       </div>
       <a href="contact.html" class="cta-link">Get in touch &rarr;</a>
     </div>
@@ -85,6 +95,21 @@
         document.getElementById('footer-name').textContent = s.artist_name;
       }
       if (s.bio) document.getElementById('about-bio').textContent = s.bio;
+
+      if (s.about_body) {
+        const extra = document.getElementById('about-extra');
+        s.about_body.trim().split(/\n\n+/).forEach(para => {
+          const p = document.createElement('p');
+          p.textContent = para.trim();
+          extra.appendChild(p);
+        });
+      }
+
+      setPageMeta({
+        title: `About — ${s.artist_name || 'Studio'}`,
+        description: s.bio || '',
+        image: s.portrait_url || '',
+      });
 
       if (s.portrait_url) {
         const el = document.getElementById('about-portrait');

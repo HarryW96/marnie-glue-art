@@ -3,11 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Contact — Studio</title>
+  <title>Marnie Glue — Contact</title>
+  <link rel="icon" type="image/png" href="/client/img/favicon.ico">
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/style.css" />
+  <meta name="description" content="" />
+  <meta property="og:site_name" content="Studio" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="" />
+  <meta property="og:description" content="" />
+  <meta property="og:image" content="" />
+  <meta property="og:url" content="" />
+  <meta name="twitter:card" content="summary_large_image" />
 </head>
 <body>
   <nav class="nav">
@@ -91,6 +100,10 @@
       if (s.email)        document.getElementById('contact-email').textContent = s.email;
       if (s.instagram)    document.getElementById('contact-instagram').textContent = s.instagram;
       if (s.location)     document.getElementById('contact-location').textContent = s.location;
+      setPageMeta({
+        title: `Contact — ${s.artist_name || 'Studio'}`,
+        description: `Get in touch with ${s.artist_name || 'the studio'} — commissions, exhibitions, and enquiries welcome.`,
+      });
     }).catch(() => {});
 
     // Pre-fill work enquiry from URL params

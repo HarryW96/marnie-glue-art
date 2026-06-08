@@ -3,11 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Collection — Studio</title>
+  <title>Marnie Glue — Collection</title>
+  <link rel="icon" type="image/png" href="/client/img/favicon.ico">
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/style.css" />
+  <meta name="description" content="" />
+  <meta property="og:site_name" content="Studio" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="" />
+  <meta property="og:description" content="" />
+  <meta property="og:image" content="" />
+  <meta property="og:url" content="" />
+  <meta name="twitter:card" content="summary_large_image" />
 </head>
 <body>
   <nav class="nav">
@@ -83,6 +92,12 @@
           document.getElementById('collection-desc').textContent = cat.description;
         }
 
+        setPageMeta({
+          title: `${cat.name} — ${settings.artist_name || 'Studio'}`,
+          description: cat.description || `The ${cat.name} collection`,
+          image: works[0]?.images?.[0]?.image_url || settings.portrait_url || '',
+        });
+
         renderGallery(works);
         renderPhotos(collectionPhotos);
         renderLinks(cat.links || []);
@@ -107,15 +122,16 @@
         item.style.animationDelay = `${i * 0.06}s`;
 
         const coverImg = work.images?.[0];
+        const soldBadge = !work.available ? '<div class="sold-badge">Sold</div>' : '';
         const imgHtml = coverImg
-          ? `<img class="gallery-thumb" src="${cloudinaryUrl(coverImg.image_url, { width: 600 })}" alt="${work.title}" loading="lazy" />`
-          : `<div class="gallery-thumb-placeholder" style="background:${work.colour}22">
+          ? `<div class="gallery-thumb-wrap"><img class="gallery-thumb" src="${cloudinaryUrl(coverImg.image_url, { width: 600 })}" alt="${work.title}" loading="lazy" />${soldBadge}</div>`
+          : `<div class="gallery-thumb-wrap"><div class="gallery-thumb-placeholder" style="background:${work.colour}22">
                <svg width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg" opacity="0.35">
                  <rect x="8" y="8" width="44" height="44" rx="2" stroke="${work.colour}" stroke-width="1.5" fill="none"/>
                  <circle cx="22" cy="22" r="5" stroke="${work.colour}" stroke-width="1.5" fill="none"/>
                  <path d="M8 38l12-10 10 8 8-6 14 14" stroke="${work.colour}" stroke-width="1.5" fill="none"/>
                </svg>
-             </div>`;
+             </div>${soldBadge}</div>`;
 
         item.innerHTML = `
           ${imgHtml}

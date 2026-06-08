@@ -58,8 +58,18 @@
             <input type="text" id="s-tagline" placeholder="e.g. Mixed Media &amp; Sculpture" />
           </div>
           <div class="form-group">
+            <label for="s-hero-title">Homepage heading</label>
+            <input type="text" id="s-hero-title" placeholder="e.g. Works that live between worlds" />
+            <p style="font-size:0.78rem;color:var(--muted);margin-top:0.35rem;line-height:1.5;">The large heading on the gallery page. Leave blank to keep the default.</p>
+          </div>
+          <div class="form-group">
             <label for="s-bio">Short bio (shown on About page)</label>
             <textarea id="s-bio" rows="3" placeholder="A sentence or two about your practice..."></textarea>
+          </div>
+          <div class="form-group">
+            <label for="s-about-body">About page — additional text</label>
+            <p style="font-size:0.8rem;color:var(--muted);margin-bottom:0.5rem;line-height:1.6;">Shown below the bio. Separate paragraphs with a blank line.</p>
+            <textarea id="s-about-body" rows="6" placeholder="Write about your process, materials, influences...&#10;&#10;A second paragraph can go here."></textarea>
           </div>
           <div class="form-group">
             <label for="s-email">Contact email</label>
@@ -87,9 +97,8 @@
           </div>
 
           <div style="padding:1.25rem;background:var(--cream-dark);border-left:3px solid var(--sand);margin-top:0.5rem;">
-            <strong style="display:block;margin-bottom:0.4rem;font-size:0.82rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--deep-brown);">Shopify Integration (future)</strong>
-            <p style="font-size:0.85rem;color:var(--muted);line-height:1.7;margin-bottom:0.75rem;">When you're ready to sell, add your Shopify store domain here. A Buy Button embed will be available per-work in the edit screen — no rebuild required.</p>
-            <input type="text" placeholder="yourstore.myshopify.com (not yet active)" disabled style="opacity:0.45;cursor:not-allowed;background:var(--cream-dark);" />
+            <strong style="display:block;margin-bottom:0.4rem;font-size:0.82rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--deep-brown);">Shopify Buy Buttons</strong>
+            <p style="font-size:0.85rem;color:var(--muted);line-height:1.7;">To add a buy button to a work, go to <strong>Edit Work</strong> and paste the embed code from your Shopify Buy Button channel (Sales channels → Buy Button → Create button → Copy code). The button appears on the public work page for available works.</p>
           </div>
 
           <button type="submit" class="form-submit" id="save-btn">Save settings</button>
@@ -109,7 +118,9 @@
         const s = await Settings.get();
         if (s.artist_name)    document.getElementById('s-name').value        = s.artist_name;
         if (s.tagline)        document.getElementById('s-tagline').value      = s.tagline;
+        if (s.hero_title)     document.getElementById('s-hero-title').value   = s.hero_title;
         if (s.bio)            document.getElementById('s-bio').value          = s.bio;
+        if (s.about_body)     document.getElementById('s-about-body').value   = s.about_body;
         if (s.email)          document.getElementById('s-email').value        = s.email;
         if (s.instagram)      document.getElementById('s-instagram').value    = s.instagram;
         if (s.location)       document.getElementById('s-location').value     = s.location;
@@ -156,7 +167,9 @@
         await Settings.update({
           artist_name:    document.getElementById('s-name').value,
           tagline:        document.getElementById('s-tagline').value,
+          hero_title:     document.getElementById('s-hero-title').value,
           bio:            document.getElementById('s-bio').value,
+          about_body:     document.getElementById('s-about-body').value,
           email:          document.getElementById('s-email').value,
           instagram:      document.getElementById('s-instagram').value,
           location:       document.getElementById('s-location').value,

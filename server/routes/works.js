@@ -13,7 +13,7 @@ function withImages(work) {
   const images = db.prepare(
     `SELECT * FROM work_images WHERE work_id = ? ORDER BY sort_order ASC, created_at ASC`
   ).all(work.id);
-  return { ...work, available: !!work.available, images };
+  return { ...work, available: !!work.available, featured: !!work.featured, images };
 }
 
 // ── Public ────────────────────────────────────────────────────────────────────
@@ -87,11 +87,14 @@ router.patch('/:id', requireAuth, (req, res) => {
     if (!work) return res.status(404).json({ error: 'Work not found' });
 
     const allowed = ['title','year','category','medium','dimensions','description',
-                     'price','available','colour','sort_order'];
+                     'price','available','colour','sort_order','shopify_embed','featured'];
     const updates = {};
     allowed.forEach(f => { if (req.body[f] !== undefined) updates[f] = req.body[f]; });
     if (updates.available !== undefined) {
       updates.available = (updates.available === '1' || updates.available === 'true' || updates.available === true) ? 1 : 0;
+    }
+    if (updates.featured !== undefined) {
+      updates.featured = (updates.featured === '1' || updates.featured === 'true' || updates.featured === true) ? 1 : 0;
     }
     if (Object.keys(updates).length > 0) {
       const setClauses = Object.keys(updates).map(k => `${k} = ?`).join(', ');

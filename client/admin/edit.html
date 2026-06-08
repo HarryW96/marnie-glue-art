@@ -181,6 +181,18 @@
               </select>
             </div>
           </div>
+          <div class="form-group">
+            <label>Featured on homepage?</label>
+            <select id="e-featured">
+              <option value="true"  ${work.featured ? 'selected' : ''}>Yes — show in Featured Works</option>
+              <option value="false" ${!work.featured ? 'selected' : ''}>No</option>
+            </select>
+          </div>
+          <div style="padding:1.25rem;background:var(--cream-dark);border-left:3px solid var(--sand);margin-top:0.5rem;">
+            <strong style="display:block;margin-bottom:0.4rem;font-size:0.82rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--deep-brown);">Shopify Buy Button</strong>
+            <p style="font-size:0.82rem;color:var(--muted);line-height:1.6;margin-bottom:0.75rem;">Paste the embed code from Shopify (Sales channels → Buy Button → Create button → Copy code). Leave blank if not using Shopify for this work.</p>
+            <textarea id="e-shopify-embed" rows="4" style="font-family:monospace;font-size:0.78rem;" placeholder="<!-- Shopify Buy Button embed code -->">${esc(work.shopify_embed || '')}</textarea>
+          </div>
           <div style="display:flex;gap:1rem;align-items:center;">
             <button type="submit" class="form-submit" id="save-btn">Save changes</button>
             <a href="index.html" style="font-size:0.8rem;color:var(--muted);text-decoration:none;">Cancel</a>
@@ -196,14 +208,16 @@
         btn.textContent = 'Saving…'; btn.disabled = true;
         try {
           await Works.update(id, {
-            title:       document.getElementById('e-title').value,
-            year:        document.getElementById('e-year').value,
-            category:    document.getElementById('e-category').value,
-            medium:      document.getElementById('e-medium').value,
-            dimensions:  document.getElementById('e-dimensions').value,
-            description: document.getElementById('e-description').value,
-            price:       document.getElementById('e-price').value,
-            available:   document.getElementById('e-available').value,
+            title:          document.getElementById('e-title').value,
+            year:           document.getElementById('e-year').value,
+            category:       document.getElementById('e-category').value,
+            medium:         document.getElementById('e-medium').value,
+            dimensions:     document.getElementById('e-dimensions').value,
+            description:    document.getElementById('e-description').value,
+            price:          document.getElementById('e-price').value,
+            available:      document.getElementById('e-available').value,
+            shopify_embed:  document.getElementById('e-shopify-embed').value,
+            featured:       document.getElementById('e-featured').value,
           });
           showToast('Changes saved.');
         } catch (err) {

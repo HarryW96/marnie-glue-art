@@ -188,6 +188,32 @@ const Auth = {
   },
 };
 
+// ── SEO / meta tags ───────────────────────────────────────────────────────────
+
+function setPageMeta({ title, description, image } = {}) {
+  const upsert = (selector, content) => {
+    if (!content) return;
+    let el = document.querySelector(selector);
+    if (!el) {
+      el = document.createElement('meta');
+      const m = selector.match(/\[([^=\]]+)="([^"]+)"\]/);
+      if (m) el.setAttribute(m[1], m[2]);
+      document.head.appendChild(el);
+    }
+    el.setAttribute('content', content);
+  };
+
+  if (title) document.title = title;
+  upsert('meta[name="description"]',         description);
+  upsert('meta[property="og:title"]',        title);
+  upsert('meta[property="og:description"]',  description);
+  upsert('meta[property="og:image"]',        image);
+  upsert('meta[property="og:url"]',          location.href);
+  upsert('meta[name="twitter:title"]',       title);
+  upsert('meta[name="twitter:description"]', description);
+  upsert('meta[name="twitter:image"]',       image);
+}
+
 // ── Utilities ────────────────────────────────────────────────────────────────
 
 function categoryLabel(cat) {

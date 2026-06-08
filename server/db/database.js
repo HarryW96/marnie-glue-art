@@ -81,6 +81,16 @@ function migrate(db) {
     db.exec(`ALTER TABLE categories ADD COLUMN links TEXT DEFAULT '[]'`);
   } catch (_) { /* column already exists */ }
 
+  // Add Shopify embed code per work
+  try {
+    db.exec(`ALTER TABLE works ADD COLUMN shopify_embed TEXT DEFAULT ''`);
+  } catch (_) { /* column already exists */ }
+
+  // Featured flag for homepage curation
+  try {
+    db.exec(`ALTER TABLE works ADD COLUMN featured INTEGER DEFAULT 0`);
+  } catch (_) { /* column already exists */ }
+
   // Collection photos (press shots, exhibition images) per category
   db.exec(`
     CREATE TABLE IF NOT EXISTS collection_images (

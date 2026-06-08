@@ -73,6 +73,7 @@
               <div class="admin-card-actions">
                 <a href="edit.html?id=${work.id}" class="admin-btn">Edit</a>
                 <a href="../work.html?id=${work.id}" class="admin-btn" target="_blank">View</a>
+                <button class="admin-btn" onclick="toggleFeatured('${work.id}', ${work.featured})" title="${work.featured ? 'Remove from featured homepage' : 'Add to featured homepage'}" style="color:${work.featured ? 'var(--rust)' : 'var(--muted)'}">${work.featured ? '★ Featured' : '☆ Feature'}</button>
                 <button class="admin-btn danger" onclick="deleteWork('${work.id}', '${work.title.replace(/'/g, "\\'")}')">Delete</button>
               </div>
             </div>`;
@@ -91,6 +92,16 @@
         const badge = document.getElementById('unread-badge');
         if (unread > 0) { badge.textContent = unread; badge.style.display = 'inline'; }
       } catch {}
+    }
+
+    async function toggleFeatured(id, currentFeatured) {
+      try {
+        await Works.update(id, { featured: !currentFeatured });
+        showToast(currentFeatured ? 'Removed from featured.' : 'Added to featured homepage.');
+        loadWorks();
+      } catch {
+        showToast('Failed to update featured status.');
+      }
     }
 
     async function deleteWork(id, title) {

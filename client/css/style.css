@@ -4,16 +4,18 @@
    ============================================ */
 
 :root {
-  --cream:        #F5F0E8;
-  --cream-dark:   #EDE5D8;
-  --warm-brown:   #8B6F5E;
+  --cream:        #F6EDE9;   /* warm ivory with a faint pink blush */
+  --cream-dark:   #EBE0DA;   /* slightly rosier than before */
+  --warm-brown:   #8B6B5E;
   --deep-brown:   #4A3728;
-  --rust:         #B5613A;
-  --rust-light:   #D4886A;
-  --clay:         #C4956A;
-  --sand:         #D4C4A8;
+  --rust:         #B05050;   /* dusty crimson — was orange-rust */
+  --rust-light:   #CA7D7D;   /* dusty rose — was peach */
+  --clay:         #C4846C;   /* flesh-warm — was yellow-clay */
+  --sand:         #D4BEBA;   /* blush-sand — was yellow-beige */
+  --blush:        #ECDBD8;   /* soft blush for panel accents */
+  --rose:         #B87272;   /* dusty rose mid-tone */
   --charcoal:     #2C2420;
-  --muted:        #7A6E67;
+  --muted:        #7A6E68;
   --nav-height:   72px;
 
   --font-display: 'Cormorant Garamond', Georgia, serif;
@@ -119,7 +121,7 @@ body {
 .hero-line {
   width: 4rem;
   height: 1px;
-  background: var(--clay);
+  background: var(--rose);
 }
 
 /* ── Filter Bar ── */
@@ -323,6 +325,29 @@ body {
 .gallery-item {
   cursor: pointer;
   animation: fadeUp 0.5s ease both;
+  position: relative;
+}
+
+.gallery-thumb-wrap {
+  position: relative;
+  overflow: hidden;
+}
+
+.sold-badge {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(28, 20, 14, 0.72);
+  color: var(--cream);
+  font-family: var(--font-body);
+  font-size: 0.62rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  text-align: center;
+  padding: 0.45rem 0;
+  pointer-events: none;
 }
 
 .gallery-item.hidden {
@@ -505,6 +530,36 @@ body {
 
 .work-enquire:hover { background: var(--rust); }
 
+.work-sold-notice {
+  display: inline-block;
+  padding: 0.85rem 2rem;
+  background: var(--cream-dark);
+  border: 1px solid var(--sand);
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.work-detail-image { position: relative; }
+
+.work-collection-link {
+  display: inline-block;
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--rust);
+  text-decoration: none;
+  margin-bottom: 0.6rem;
+  transition: opacity 0.2s;
+}
+.work-collection-link:hover { opacity: 0.7; }
+
+.shopify-embed { margin: 1.5rem 0 0; }
+
 /* ── Related Works ── */
 .related-works {
   padding: 4rem 3rem 6rem;
@@ -537,7 +592,7 @@ body {
 .about-portrait-placeholder {
   width: 100%;
   aspect-ratio: 3/4;
-  background: var(--cream-dark);
+  background: var(--blush);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -825,8 +880,9 @@ body {
 }
 
 .admin-card-actions {
-  display: flex;
-  gap: 0.5rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem;
 }
 
 .admin-btn {

@@ -18,7 +18,7 @@ router.patch('/', requireAuth, (req, res) => {
   const db = getDb();
   const allowed = [
     'artist_name', 'tagline', 'email', 'instagram', 'location', 'bio',
-    'hero_title', 'hero_subtitle',
+    'hero_title', 'hero_subtitle', 'about_body',
     'portrait_url', 'cv_exhibitions', 'cv_education',
   ];
   const upsert = db.prepare(`INSERT INTO site_settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value`);

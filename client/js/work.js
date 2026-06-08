@@ -5,16 +5,21 @@ async function initWork() {
   if (!id) { location.href = 'index.html'; return; }
 
   try {
-    const [work, allWorks, settings] = await Promise.all([
-      Works.get(id), Works.list(), Settings.get(),
+    const [work, allWorks, settings, categories] = await Promise.all([
+      Works.get(id), Works.list(), Settings.get(), Categories.list(),
     ]);
 
     const artistName = settings.artist_name || 'Studio';
-    document.title = `${work.title} — ${artistName}`;
     const logo = document.getElementById('nav-logo');
     if (logo) logo.textContent = artistName;
 
     const images = work.images || [];
+
+    setPageMeta({
+      title: `${work.title} — ${artistName}`,
+      description: work.description || [work.year, work.medium].filter(Boolean).join('. '),
+      image: images[0]?.image_url || '',
+    });
     const detail = document.getElementById('work-detail');
 
     // Build image display — gallery if multiple, single if one, placeholder if none
@@ -36,6 +41,7 @@ async function initWork() {
           <img src="${cloudinaryUrl(images[0].image_url, { width: 1200 })}"
                alt="${work.title}" style="width:100%;display:block;cursor:zoom-in;"
                onclick="openLightbox(0)" />
+          ${!work.available ? '<div class="sold-badge" style="font-size:0.75rem;padding:0.6rem 0;">Sold</div>' : ''}
         </div>`;
     } else {
       // Multi-image gallery: large primary + thumbnail strip
@@ -62,7 +68,7 @@ async function initWork() {
     detail.innerHTML = `
       ${imageHtml}
       <div class="work-detail-info">
-        <p class="work-detail-category">${work.category}</p>
+        ${(() => { const cat = categories.find(c => c.slug === work.category); return cat ? `<a href="collection.html?slug=${cat.slug}" class="work-collection-link">${cat.name} collection →</a>` : `<p class="work-detail-category">${work.category}</p>`; })()}
         <h1 class="work-detail-title">${work.title}</h1>
         <div class="work-specs">
           <div>
@@ -83,7 +89,10 @@ async function initWork() {
           </div>
         </div>
         ${work.description ? `<p class="work-detail-desc">${work.description}</p>` : ''}
-        <a href="contact.html?work=${work.id}&title=${encodeURIComponent(work.title)}" class="work-enquire">Enquire about this work</a>
+        ${work.shopify_embed ? `<div class="shopify-embed" id="shopify-embed"></div>` : ''}
+        ${work.available
+          ? `<a href="contact.html?work=${work.id}&title=${encodeURIComponent(work.title)}" class="work-enquire">Enquire about this work</a>`
+          : `<span class="work-sold-notice">This work has sold</span>`}
       </div>`;
 
     // Related works
@@ -109,6 +118,12 @@ async function initWork() {
       document.getElementById('related-works').style.display = 'none';
     }
 
+    // Shopify embed — innerHTML doesn't execute scripts, so inject them explicitly
+    if (work.shopify_embed) {
+      const wrap = document.getElementById('shopify-embed');
+      if (wrap) injectEmbed(wrap, work.shopify_embed);
+    }
+
     // Set up lightbox
     initLightbox(images);
 
@@ -116,6 +131,23 @@ async function initWork() {
     document.getElementById('work-detail').innerHTML =
       '<p style="padding:2rem;color:var(--muted)">Work not found.</p>';
   }
+}
+
+// ── Shopify embed helper — re-executes <script> tags that innerHTML won't run ─
+
+function injectEmbed(container, html) {
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  Array.from(tmp.childNodes).forEach(node => {
+    if (node.nodeName === 'SCRIPT') {
+      const s = document.createElement('script');
+      if (node.src) { s.src = node.src; s.async = true; }
+      else s.textContent = node.textContent;
+      container.appendChild(s);
+    } else {
+      container.appendChild(node.cloneNode(true));
+    }
+  });
 }
 
 // ── Thumbnail switching ───────────────────────────────────────────────────────

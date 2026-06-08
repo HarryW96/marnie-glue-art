@@ -1,10 +1,14 @@
 // client/js/gallery.js
 
+let _allWorks = [];
+
 async function initGallery() {
   try {
     const [works, categories] = await Promise.all([Works.list(), Categories.list()]);
+    _allWorks = works;
     renderFilters(categories, works);
-    renderGallery(works);
+    const featured = works.filter(w => w.featured);
+    renderGallery(featured.length > 0 ? featured : works);
   } catch (e) {
     document.getElementById('gallery').innerHTML =
       '<p class="gallery-empty">Could not load works. Make sure the server is running.</p>';
@@ -18,11 +22,13 @@ function renderFilters(categories, works) {
   const counts = {};
   works.forEach(w => { counts[w.category] = (counts[w.category] || 0) + 1; });
 
-  // Map slug → { description, slug } for the description panel
+  const featuredCount = works.filter(w => w.featured).length;
+
+  // Map slug → category object for the description panel
   const catMap = {};
   categories.forEach(cat => { catMap[cat.slug] = cat; });
 
-  bar.innerHTML = `<button class="filter-btn active" data-filter="all">All Works <span class="filter-count">${works.length}</span></button>`;
+  bar.innerHTML = `<button class="filter-btn active" data-filter="all">Featured Works <span class="filter-count">${featuredCount || works.length}</span></button>`;
   categories.forEach(cat => {
     const n = counts[cat.slug] || 0;
     const btn = document.createElement('button');
@@ -38,10 +44,15 @@ function renderFilters(categories, works) {
       btn.classList.add('active');
       const filter = btn.dataset.filter;
       setCollectionPanel(filter === 'all' ? null : catMap[filter]);
-      try {
-        const filtered = await Works.list(filter);
-        renderGallery(filtered);
-      } catch {}
+      if (filter === 'all') {
+        const featured = _allWorks.filter(w => w.featured);
+        renderGallery(featured.length > 0 ? featured : _allWorks);
+      } else {
+        try {
+          const filtered = await Works.list(filter);
+          renderGallery(filtered);
+        } catch {}
+      }
     });
   });
 }
@@ -90,15 +101,16 @@ function renderGallery(works) {
     item.style.animationDelay = `${i * 0.06}s`;
 
     const coverImg = work.images?.[0];
+    const soldBadge = !work.available ? '<div class="sold-badge">Sold</div>' : '';
     const imgHtml = coverImg
-      ? `<img class="gallery-thumb" src="${cloudinaryUrl(coverImg.image_url, { width: 600 })}" alt="${work.title}" loading="lazy" />`
-      : `<div class="gallery-thumb-placeholder" style="background:${work.colour}22">
+      ? `<div class="gallery-thumb-wrap"><img class="gallery-thumb" src="${cloudinaryUrl(coverImg.image_url, { width: 600 })}" alt="${work.title}" loading="lazy" />${soldBadge}</div>`
+      : `<div class="gallery-thumb-wrap"><div class="gallery-thumb-placeholder" style="background:${work.colour}22">
            <svg width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg" opacity="0.35">
              <rect x="8" y="8" width="44" height="44" rx="2" stroke="${work.colour}" stroke-width="1.5" fill="none"/>
              <circle cx="22" cy="22" r="5" stroke="${work.colour}" stroke-width="1.5" fill="none"/>
              <path d="M8 38l12-10 10 8 8-6 14 14" stroke="${work.colour}" stroke-width="1.5" fill="none"/>
            </svg>
-         </div>`;
+         </div>${soldBadge}</div>`;
 
     item.innerHTML = `
       ${imgHtml}
@@ -116,7 +128,6 @@ async function applySettings() {
   try {
     const s = await Settings.get();
     if (s.artist_name) {
-      document.title = `${s.artist_name} — Portfolio`;
       const logo = document.getElementById('nav-logo');
       if (logo) logo.textContent = s.artist_name;
     }
@@ -124,6 +135,15 @@ async function applySettings() {
       const sub = document.getElementById('hero-sub');
       if (sub) sub.textContent = s.tagline;
     }
+    if (s.hero_title) {
+      const h = document.getElementById('hero-title');
+      if (h) h.textContent = s.hero_title;
+    }
+    setPageMeta({
+      title: `${s.artist_name || 'Studio'} — Portfolio`,
+      description: s.tagline || s.bio || '',
+      image: s.portrait_url || '',
+    });
   } catch {}
 }
 
