@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Works — Studio Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+  <nav class="nav">
+    <a href="../index.html" class="nav-logo">Studio</a>
+    <div class="nav-links"><a href="../index.html">View Site</a></div>
+    <button onclick="Auth.logout()" style="background:none;border:none;font-family:var(--font-body);font-size:0.75rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);cursor:pointer;">Log out</button>
+  </nav>
+
+  <div class="admin-layout">
+    <aside class="admin-sidebar">
+      <p class="admin-sidebar-title">Manage</p>
+      <a href="index.html" class="admin-nav-link active">All Works</a>
+      <a href="upload.html" class="admin-nav-link">Add New Work</a>
+      <a href="categories.html" class="admin-nav-link">Categories</a>
+      <a href="enquiries.html" class="admin-nav-link">Enquiries <span id="unread-badge" style="display:none;background:var(--rust);color:white;border-radius:2px;padding:0 5px;font-size:0.65rem;margin-left:4px;"></span></a>
+      <a href="settings.html" class="admin-nav-link">Settings</a>
+    </aside>
+
+    <main class="admin-main">
+      <h1 class="admin-heading">All Works</h1>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+        <p id="work-count" style="font-size:0.85rem;color:var(--muted)">Loading…</p>
+        <a href="upload.html" style="font-size:0.75rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--rust);text-decoration:none;border-bottom:1px solid var(--rust-light);padding-bottom:2px;">+ Add new work</a>
+      </div>
+      <div class="admin-works-grid" id="admin-works-grid"></div>
+    </main>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="../js/api.js"></script>
+  <script>
+    async function init() {
+      const ok = await Auth.check();
+      if (!ok) { location.href = 'login.html'; return; }
+      loadWorks();
+      loadUnread();
+    }
+
+    async function loadWorks() {
+      try {
+        const works = await Works.list();
+        const grid = document.getElementById('admin-works-grid');
+        document.getElementById('work-count').textContent = `${works.length} work${works.length !== 1 ? 's' : ''}`;
+
+        if (works.length === 0) {
+          grid.innerHTML = '<p style="color:var(--muted);font-size:0.9rem;">No works yet. <a href="upload.html" style="color:var(--rust)">Add your first work →</a></p>';
+          return;
+        }
+
+        grid.innerHTML = '';
+        works.forEach(work => {
+          const card = document.createElement('div');
+          card.className = 'admin-work-card';
+          const thumb = work.images?.[0]?.image_url
+            ? `<img src="${work.images[0].image_url.replace('/upload/', '/upload/w_400,q_auto,f_auto/')}" alt="${work.title}" style="width:100%;aspect-ratio:4/3;object-fit:cover;display:block;" />`
+            : `<div style="width:100%;aspect-ratio:4/3;background:${work.colour}22;display:flex;align-items:center;justify-content:center;color:${work.colour};font-style:italic;font-family:var(--font-display);">No image</div>`;
+          card.innerHTML = `
+            ${thumb}
+            <div class="admin-card-body">
+              <div class="admin-card-title">${work.title}</div>
+              <div class="admin-card-meta">${work.year} · ${work.category} · ${work.available ? '<span style="color:var(--rust)">Available</span>' : 'Unavailable'}</div>
+              <div class="admin-card-actions">
+                <a href="edit.html?id=${work.id}" class="admin-btn">Edit</a>
+                <a href="../work.html?id=${work.id}" class="admin-btn" target="_blank">View</a>
+                <button class="admin-btn danger" onclick="deleteWork('${work.id}', '${work.title.replace(/'/g, "\\'")}')">Delete</button>
+              </div>
+            </div>`;
+          grid.appendChild(card);
+        });
+      } catch (e) {
+        document.getElementById('admin-works-grid').innerHTML =
+          '<p style="color:var(--rust);font-size:0.9rem;">Failed to load works. Is the server running?</p>';
+      }
+    }
+
+    async function loadUnread() {
+      try {
+        const enquiries = await Enquiries.list();
+        const unread = enquiries.filter(e => !e.read).length;
+        const badge = document.getElementById('unread-badge');
+        if (unread > 0) { badge.textContent = unread; badge.style.display = 'inline'; }
+      } catch {}
+    }
+
+    async function deleteWork(id, title) {
+      if (!confirm(`Delete "${title}"? This cannot be undone.`)) return;
+      try {
+        await Works.delete(id);
+        showToast('Work deleted.');
+        loadWorks();
+      } catch (e) {
+        showToast('Failed to delete work.');
+      }
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2800);
+    }
+
+    init();
+  </script>
+</body>
+</html>

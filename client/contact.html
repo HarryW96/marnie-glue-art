@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contact — Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <nav class="nav">
+    <a href="index.html" class="nav-logo" id="nav-logo">Studio</a>
+    <div class="nav-links">
+      <a href="index.html">Works</a>
+      <a href="about.html">About</a>
+      <a href="contact.html" class="active">Contact</a>
+    </div>
+    <a href="admin/index.html" class="nav-admin" title="Admin">&#9654;</a>
+  </nav>
+
+  <section class="contact-layout">
+    <div class="contact-left">
+      <p class="about-label">Get in touch</p>
+      <h2 class="about-heading">Commissions,<br/><em>exhibitions &amp; enquiries</em></h2>
+      <p class="contact-intro">I welcome conversations about new commissions, exhibition opportunities, and collecting works. Please allow 3–5 days for a response.</p>
+      <div class="contact-details">
+        <div class="contact-item">
+          <span class="contact-label">Email</span>
+          <span id="contact-email">studio@example.com</span>
+        </div>
+        <div class="contact-item">
+          <span class="contact-label">Instagram</span>
+          <span id="contact-instagram">@studio.artist</span>
+        </div>
+        <div class="contact-item">
+          <span class="contact-label">Location</span>
+          <span id="contact-location">Hartlepool, England</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="contact-right">
+      <form class="contact-form" id="contact-form">
+        <div class="form-group">
+          <label for="name">Name</label>
+          <input type="text" id="name" name="name" placeholder="Your name" required />
+        </div>
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" placeholder="your@email.com" required />
+        </div>
+        <div class="form-group">
+          <label for="subject">Subject</label>
+          <select id="subject" name="subject">
+            <option value="Commission enquiry">Commission enquiry</option>
+            <option value="Exhibition proposal">Exhibition proposal</option>
+            <option value="Collecting a work">Collecting a work</option>
+            <option value="General">Other</option>
+          </select>
+        </div>
+        <div class="form-group" id="work-group" style="display:none">
+          <label>Regarding work</label>
+          <input type="text" id="work-title-display" readonly style="opacity:0.6;cursor:default;" />
+          <input type="hidden" id="work-id" />
+        </div>
+        <div class="form-group">
+          <label for="message">Message</label>
+          <textarea id="message" name="message" rows="5" placeholder="Tell me about your project or enquiry..." required></textarea>
+        </div>
+        <button type="submit" class="form-submit">Send message</button>
+        <p id="form-success" class="form-success" style="display:none;">Message sent — thank you. I'll be in touch soon.</p>
+        <p id="form-error" style="display:none;color:var(--rust);font-size:0.88rem;">Something went wrong. Please try again or email directly.</p>
+      </form>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <p>© <span id="year"></span> <span id="footer-name">Studio</span>. All rights reserved.</p>
+    <p class="footer-note">Available for commissions &amp; exhibitions.</p>
+  </footer>
+
+  <script src="js/api.js"></script>
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // Load settings
+    Settings.get().then(s => {
+      if (s.artist_name)  { document.getElementById('nav-logo').textContent = s.artist_name; document.getElementById('footer-name').textContent = s.artist_name; }
+      if (s.email)        document.getElementById('contact-email').textContent = s.email;
+      if (s.instagram)    document.getElementById('contact-instagram').textContent = s.instagram;
+      if (s.location)     document.getElementById('contact-location').textContent = s.location;
+    }).catch(() => {});
+
+    // Pre-fill work enquiry from URL params
+    const params = new URLSearchParams(location.search);
+    if (params.get('work')) {
+      document.getElementById('work-group').style.display = 'block';
+      document.getElementById('work-id').value = params.get('work');
+      document.getElementById('work-title-display').value = params.get('title') || '';
+      document.getElementById('subject').value = 'Collecting a work';
+    }
+
+    // Form submission
+    document.getElementById('contact-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = e.target.querySelector('button[type=submit]');
+      btn.textContent = 'Sending…';
+      btn.disabled = true;
+
+      try {
+        await Enquiries.submit({
+          name:    document.getElementById('name').value,
+          email:   document.getElementById('email').value,
+          subject: document.getElementById('subject').value,
+          message: document.getElementById('message').value,
+          work_id: document.getElementById('work-id').value || undefined,
+        });
+        document.getElementById('form-success').style.display = 'block';
+        document.getElementById('form-error').style.display = 'none';
+        e.target.reset();
+      } catch {
+        document.getElementById('form-error').style.display = 'block';
+        btn.textContent = 'Send message';
+        btn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Categories — Studio Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/style.css" />
+  <style>
+    .cat-list { display: flex; flex-direction: column; gap: 0.5rem; max-width: 580px; margin-bottom: 3rem; }
+
+    .cat-row {
+      background: white; border: 1px solid var(--sand); padding: 0.7rem 1rem;
+      transition: opacity 0.15s;
+    }
+    .cat-row-display { display: flex; align-items: center; gap: 0.75rem; }
+    .cat-row.dragging { opacity: 0.4; }
+
+    .cat-drag-handle {
+      cursor: grab; color: var(--sand); font-size: 1.1rem; user-select: none; flex-shrink: 0;
+    }
+    .cat-drag-handle:active { cursor: grabbing; }
+
+    .cat-name-col { flex: 1; display: flex; flex-direction: column; gap: 0.2rem; }
+    .cat-name-display { font-family: var(--font-display); font-size: 1.05rem; color: var(--deep-brown); }
+    .cat-desc-display { font-size: 0.8rem; color: var(--muted); line-height: 1.4; }
+    .cat-links-display { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.2rem; }
+    .cat-link-pill {
+      font-size: 0.68rem; letter-spacing: 0.06em; color: var(--rust);
+      border: 1px solid var(--rust); padding: 0.1rem 0.45rem; opacity: 0.8;
+    }
+
+    .cat-slug {
+      font-size: 0.68rem; letter-spacing: 0.1em; color: var(--muted);
+      background: var(--cream-dark); padding: 0.15rem 0.5rem; flex-shrink: 0;
+    }
+    .cat-work-count { font-size: 0.72rem; color: var(--muted); flex-shrink: 0; min-width: 4rem; text-align: right; }
+
+    /* Edit panel — shown below the display row */
+    .cat-edit-panel {
+      display: none;
+      flex-direction: column;
+      gap: 0.6rem;
+      padding-top: 0.85rem;
+      border-top: 1px solid var(--cream-dark);
+      margin-top: 0.7rem;
+    }
+    .cat-row.editing .cat-edit-panel { display: flex; }
+
+    .cat-edit-panel input,
+    .cat-edit-panel textarea {
+      background: var(--cream-dark); border: 1px solid var(--warm-brown);
+      padding: 0.35rem 0.65rem; font-family: var(--font-body); font-size: 0.88rem;
+      color: var(--deep-brown); outline: none; width: 100%;
+    }
+    .cat-edit-panel input.name-input { font-family: var(--font-display); font-size: 1.05rem; }
+    .cat-edit-panel textarea { resize: vertical; line-height: 1.5; }
+
+    .links-section-label {
+      font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 0.1rem; display: flex; align-items: center; gap: 0.75rem;
+    }
+    .link-row { display: flex; gap: 0.4rem; align-items: center; margin-bottom: 0.35rem; }
+    .link-row input { flex: 1; }
+    .link-row .link-url { flex: 2; }
+    .remove-link-btn {
+      background: none; border: 1px solid var(--sand); color: var(--muted);
+      font-size: 0.85rem; width: 1.8rem; height: 1.8rem; cursor: pointer; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .remove-link-btn:hover { border-color: var(--rust); color: var(--rust); }
+    .add-link-btn {
+      background: none; border: none; color: var(--rust); font-size: 0.75rem;
+      letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; padding: 0;
+    }
+    .add-link-btn:hover { text-decoration: underline; }
+
+    .edit-actions { display: flex; gap: 0.5rem; }
+
+    .add-cat-form { display: flex; flex-direction: column; gap: 0; max-width: 580px; }
+    .add-cat-form .form-group { margin-bottom: 0.85rem; }
+    .add-cat-form input, .add-cat-form textarea { background: white; }
+    .add-cat-form textarea { resize: vertical; }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <a href="../index.html" class="nav-logo">Studio</a>
+    <div class="nav-links"><a href="../index.html">View Site</a></div>
+    <button onclick="Auth.logout()" style="background:none;border:none;font-family:var(--font-body);font-size:0.75rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);cursor:pointer;">Log out</button>
+  </nav>
+
+  <div class="admin-layout">
+    <aside class="admin-sidebar">
+      <p class="admin-sidebar-title">Manage</p>
+      <a href="index.html" class="admin-nav-link">All Works</a>
+      <a href="upload.html" class="admin-nav-link">Add New Work</a>
+      <a href="categories.html" class="admin-nav-link active">Categories</a>
+      <a href="enquiries.html" class="admin-nav-link">Enquiries</a>
+      <a href="settings.html" class="admin-nav-link">Settings</a>
+    </aside>
+
+    <main class="admin-main">
+      <h1 class="admin-heading">Categories</h1>
+      <p style="font-size:0.88rem;color:var(--muted);margin-bottom:2rem;max-width:500px;">
+        Categories appear as filter tabs on the gallery. Add a description and optional links (press releases, interviews) — these appear on each collection's dedicated page.
+      </p>
+
+      <div class="cat-list" id="cat-list">
+        <p style="color:var(--muted);font-style:italic;font-family:var(--font-display);">Loading…</p>
+      </div>
+
+      <h2 style="font-family:var(--font-display);font-size:1.3rem;font-weight:300;color:var(--deep-brown);margin-bottom:1.25rem;">Add new category</h2>
+      <div class="add-cat-form">
+        <div class="form-group">
+          <label for="new-cat-name">Category name</label>
+          <input type="text" id="new-cat-name" placeholder="e.g. Ceramics" />
+        </div>
+        <div class="form-group">
+          <label for="new-cat-desc">Description <span style="color:var(--muted);font-weight:400;">(optional)</span></label>
+          <textarea id="new-cat-desc" rows="2" placeholder="A short description shown on the collection page…"></textarea>
+        </div>
+        <button class="form-submit" id="add-cat-btn" onclick="addCategory()" style="width:fit-content;">Add category</button>
+      </div>
+      <p id="add-error" style="display:none;color:var(--rust);font-size:0.85rem;margin-top:0.5rem;"></p>
+    </main>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="../js/api.js"></script>
+  <script>
+    let cats = [];
+    let workCounts = {};
+
+    function escHtml(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    async function init() {
+      const ok = await Auth.check();
+      if (!ok) { location.href = 'login.html'; return; }
+      await loadData();
+    }
+
+    async function loadData() {
+      try {
+        const [fetchedCats, works] = await Promise.all([Categories.list(), Works.list()]);
+        cats = fetchedCats;
+        workCounts = {};
+        works.forEach(w => { workCounts[w.category] = (workCounts[w.category] || 0) + 1; });
+        renderList();
+      } catch {
+        showToast('Failed to load categories.');
+      }
+    }
+
+    function renderList() {
+      const list = document.getElementById('cat-list');
+      if (cats.length === 0) {
+        list.innerHTML = '<p style="color:var(--muted);font-size:0.9rem;">No categories yet. Add one below.</p>';
+        return;
+      }
+
+      list.innerHTML = '';
+      cats.forEach(cat => {
+        const count = workCounts[cat.slug] || 0;
+        const row = document.createElement('div');
+        row.className = 'cat-row';
+        row.draggable = true;
+        row.dataset.id = cat.id;
+        row.dataset.slug = cat.slug;
+
+        const linkPills = (cat.links || []).map(l =>
+          `<span class="cat-link-pill">${escHtml(l.label)}</span>`
+        ).join('');
+
+        row.innerHTML = `
+          <!-- Display mode -->
+          <div class="cat-row-display">
+            <span class="cat-drag-handle" title="Drag to reorder">⠿</span>
+            <div class="cat-name-col">
+              <span class="cat-name-display">${escHtml(cat.name)}</span>
+              ${cat.description ? `<span class="cat-desc-display">${escHtml(cat.description)}</span>` : ''}
+              ${linkPills ? `<div class="cat-links-display">${linkPills}</div>` : ''}
+            </div>
+            <span class="cat-slug">${cat.slug}</span>
+            <span class="cat-work-count">${count} work${count !== 1 ? 's' : ''}</span>
+            <div class="admin-card-actions" style="gap:0.4rem;flex-shrink:0;">
+              <a class="admin-btn" href="collection-photos.html?id=${cat.id}" style="text-decoration:none;">Photos</a>
+              <button class="admin-btn" onclick="startEdit(this)">Edit</button>
+              <button class="admin-btn danger" onclick="deleteCategory('${cat.id}', '${escHtml(cat.name).replace(/'/g, "\\'")}', ${count})"
+                ${count > 0 ? 'disabled title="Reassign all works before deleting"' : ''}>Delete</button>
+            </div>
+          </div>
+
+          <!-- Edit panel -->
+          <div class="cat-edit-panel">
+            <input class="name-input" type="text" value="${escHtml(cat.name)}" placeholder="Category name" />
+            <textarea class="desc-input" rows="3" placeholder="Description (optional)">${escHtml(cat.description || '')}</textarea>
+
+            <div>
+              <div class="links-section-label">
+                External links
+                <button type="button" class="add-link-btn" onclick="addLinkRow(this.closest('.cat-edit-panel').querySelector('.links-list'))">+ Add link</button>
+              </div>
+              <div class="links-list"></div>
+            </div>
+
+            <div class="edit-actions">
+              <button class="admin-btn" onclick="saveEdit('${cat.id}', this)">Save</button>
+              <button class="admin-btn" onclick="cancelEdit(this)">Cancel</button>
+            </div>
+          </div>`;
+
+        row.querySelector('.name-input').addEventListener('keydown', e => {
+          if (e.key === 'Escape') row.querySelector('[onclick*="cancelEdit"]').click();
+        });
+
+        setupDrag(row);
+        list.appendChild(row);
+      });
+    }
+
+    function addLinkRow(container, label = '', url = '') {
+      const row = document.createElement('div');
+      row.className = 'link-row';
+      row.innerHTML = `
+        <input type="text" class="link-label" placeholder="Label (e.g. Press release)" value="${escHtml(label)}" />
+        <input type="text" class="link-url" placeholder="https://…" value="${escHtml(url)}" />
+        <button type="button" class="remove-link-btn" title="Remove" onclick="this.closest('.link-row').remove()">×</button>`;
+      container.appendChild(row);
+      row.querySelector('.link-label').focus();
+    }
+
+    function startEdit(btn) {
+      const row = btn.closest('.cat-row');
+      const cat = cats.find(c => c.id === row.dataset.id);
+
+      // Populate links list from current data
+      const linksList = row.querySelector('.links-list');
+      linksList.innerHTML = '';
+      (cat.links || []).forEach(l => addLinkRow(linksList, l.label, l.url));
+
+      row.classList.add('editing');
+      row.querySelector('.name-input').focus();
+      row.querySelector('.name-input').select();
+    }
+
+    function cancelEdit(btn) {
+      const row = btn.closest('.cat-row');
+      row.classList.remove('editing');
+      const cat = cats.find(c => c.id === row.dataset.id);
+      if (cat) {
+        row.querySelector('.name-input').value = cat.name;
+        row.querySelector('.desc-input').value = cat.description || '';
+      }
+    }
+
+    async function saveEdit(id, btn) {
+      const row = btn.closest('.cat-row');
+      const newName = row.querySelector('.name-input').value.trim();
+      const newDesc = row.querySelector('.desc-input').value.trim();
+      if (!newName) return;
+
+      const links = [...row.querySelectorAll('.link-row')].map(r => ({
+        label: r.querySelector('.link-label').value.trim(),
+        url:   r.querySelector('.link-url').value.trim(),
+      })).filter(l => l.label && l.url);
+
+      btn.textContent = '…'; btn.disabled = true;
+      try {
+        const cat = cats.find(c => c.id === id);
+        await Categories.update(id, {
+          ...(newName !== cat?.name ? { name: newName } : {}),
+          description: newDesc,
+          links,
+        });
+        showToast('Category updated.');
+        await loadData();
+      } catch (err) {
+        showToast(err.message || 'Failed to update.');
+        btn.textContent = 'Save'; btn.disabled = false;
+      }
+    }
+
+    async function addCategory() {
+      const nameInput = document.getElementById('new-cat-name');
+      const descInput = document.getElementById('new-cat-desc');
+      const errEl     = document.getElementById('add-error');
+      const btn       = document.getElementById('add-cat-btn');
+      const name = nameInput.value.trim();
+      if (!name) return;
+
+      errEl.style.display = 'none';
+      btn.textContent = 'Adding…'; btn.disabled = true;
+
+      try {
+        await Categories.create(name, descInput.value.trim());
+        nameInput.value = '';
+        descInput.value = '';
+        showToast(`"${name}" added.`);
+        await loadData();
+      } catch (err) {
+        errEl.textContent = err.message || 'Failed to add category.';
+        errEl.style.display = 'block';
+      } finally {
+        btn.textContent = 'Add category'; btn.disabled = false;
+      }
+    }
+
+    async function deleteCategory(id, name, count) {
+      if (count > 0) return;
+      if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
+      try {
+        await Categories.delete(id);
+        showToast(`"${name}" deleted.`);
+        await loadData();
+      } catch (err) {
+        showToast(err.message || 'Failed to delete.');
+      }
+    }
+
+    // ── Drag to reorder ──────────────────────────────────────────────────────
+
+    let dragSrc = null;
+
+    function setupDrag(row) {
+      row.addEventListener('dragstart', e => {
+        if (row.classList.contains('editing')) { e.preventDefault(); return; }
+        dragSrc = row;
+        row.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+      });
+      row.addEventListener('dragend', () => {
+        row.classList.remove('dragging');
+        dragSrc = null;
+        saveOrder();
+      });
+      row.addEventListener('dragover', e => {
+        e.preventDefault();
+        if (!dragSrc || dragSrc === row) return;
+        const list = document.getElementById('cat-list');
+        const rows = [...list.querySelectorAll('.cat-row')];
+        const srcIdx = rows.indexOf(dragSrc);
+        const tgtIdx = rows.indexOf(row);
+        if (srcIdx < tgtIdx) list.insertBefore(dragSrc, row.nextSibling);
+        else list.insertBefore(dragSrc, row);
+      });
+    }
+
+    async function saveOrder() {
+      const rows = [...document.querySelectorAll('.cat-row')];
+      try {
+        await Promise.all(rows.map((row, i) => Categories.reorder(row.dataset.id, i + 1)));
+        const newOrder = rows.map(r => cats.find(c => c.id === r.dataset.id)).filter(Boolean);
+        cats = newOrder;
+      } catch {
+        showToast('Failed to save order.');
+      }
+    }
+
+    document.getElementById('new-cat-name').addEventListener('keydown', e => {
+      if (e.key === 'Enter') addCategory();
+    });
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg; t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2800);
+    }
+
+    init();
+  </script>
+</body>
+</html>

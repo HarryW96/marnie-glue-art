@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Edit Work — Studio Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/style.css" />
+  <style>
+    .image-manager { margin-bottom: 2rem; }
+    .image-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+    .image-card {
+      position: relative;
+      background: var(--cream-dark);
+      border: 1px solid var(--sand);
+      cursor: grab;
+    }
+    .image-card:active { cursor: grabbing; }
+    .image-card.dragging { opacity: 0.4; }
+    .image-card img {
+      width: 100%; aspect-ratio: 1; object-fit: cover; display: block;
+    }
+    .image-card-actions {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0.4rem 0.5rem; background: white; border-top: 1px solid var(--sand);
+    }
+    .image-order-badge {
+      font-size: 0.65rem; letter-spacing: 0.08em; color: var(--muted);
+      text-transform: uppercase;
+    }
+    .img-delete-btn {
+      background: none; border: none; color: var(--muted); cursor: pointer;
+      font-size: 0.75rem; padding: 0; transition: color 0.15s;
+    }
+    .img-delete-btn:hover { color: var(--rust); }
+    .image-card.cover-card::after {
+      content: 'Cover';
+      position: absolute; top: 6px; left: 6px;
+      background: var(--deep-brown); color: var(--cream);
+      font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 2px 6px;
+    }
+    .add-images-zone {
+      border: 2px dashed var(--sand); padding: 1.5rem; text-align: center;
+      color: var(--muted); cursor: pointer; font-size: 0.85rem;
+      transition: all 0.2s; position: relative;
+    }
+    .add-images-zone:hover, .add-images-zone.drag-over {
+      border-color: var(--warm-brown); background: var(--cream-dark);
+    }
+    .add-images-zone span {
+      font-family: var(--font-display); font-style: italic;
+      color: var(--warm-brown); font-size: 1rem; display: block; margin-bottom: 0.25rem;
+    }
+    .add-images-zone input {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+    }
+    .upload-queue { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
+    .upload-queue img { width: 80px; height: 80px; object-fit: cover; opacity: 0.7; }
+    .no-images-msg {
+      font-family: var(--font-display); font-style: italic;
+      color: var(--muted); font-size: 1rem; margin-bottom: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <a href="../index.html" class="nav-logo">Studio</a>
+    <div class="nav-links"><a href="../index.html">View Site</a></div>
+    <button onclick="Auth.logout()" style="background:none;border:none;font-family:var(--font-body);font-size:0.75rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);cursor:pointer;">Log out</button>
+  </nav>
+
+  <div class="admin-layout">
+    <aside class="admin-sidebar">
+      <p class="admin-sidebar-title">Manage</p>
+      <a href="index.html" class="admin-nav-link active">All Works</a>
+      <a href="upload.html" class="admin-nav-link">Add New Work</a>
+      <a href="categories.html" class="admin-nav-link">Categories</a>
+      <a href="enquiries.html" class="admin-nav-link">Enquiries</a>
+      <a href="settings.html" class="admin-nav-link">Settings</a>
+    </aside>
+
+    <main class="admin-main">
+      <div class="back-bar" style="padding:0 0 1.5rem;">
+        <a href="index.html" class="back-link">&larr; All works</a>
+      </div>
+      <div class="edit-form" id="edit-form-wrap">
+        <p style="color:var(--muted);font-style:italic;font-family:var(--font-display);">Loading…</p>
+      </div>
+    </main>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="../js/api.js"></script>
+  <script>
+    const id = new URLSearchParams(location.search).get('id');
+    let currentWork = null;
+
+    async function init() {
+      if (!await Auth.check()) { location.href = 'login.html'; return; }
+      if (!id) { location.href = 'index.html'; return; }
+      try {
+        const [work, cats] = await Promise.all([Works.get(id), Categories.list()]);
+        currentWork = work;
+        renderForm(work, cats);
+      } catch {
+        document.getElementById('edit-form-wrap').innerHTML = '<p style="color:var(--rust)">Work not found.</p>';
+      }
+    }
+
+    function renderForm(work, cats) {
+      document.getElementById('edit-form-wrap').innerHTML = `
+        <h1 class="admin-heading" style="margin-bottom:2rem;">Edit: ${work.title}</h1>
+
+        <!-- ── Image Manager ── -->
+        <div class="image-manager">
+          <label style="font-size:0.7rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:0.75rem;">
+            Images <span style="font-weight:400;text-transform:none;letter-spacing:0;">(drag to reorder — first image is the cover)</span>
+          </label>
+          <div class="image-grid" id="image-grid"></div>
+
+          <div class="add-images-zone" id="add-zone">
+            <span>Add more images</span>
+            Drop or click to upload (up to 10 total)
+            <input type="file" id="add-image-input" accept="image/*" multiple />
+          </div>
+          <div class="upload-queue" id="upload-queue"></div>
+          <button class="admin-btn" id="upload-queued-btn" style="display:none;margin-top:0.75rem;" onclick="uploadQueued()">
+            Upload selected images
+          </button>
+        </div>
+
+        <!-- ── Metadata Form ── -->
+        <form class="upload-form" id="edit-form">
+          <div class="form-group">
+            <label>Title *</label>
+            <input type="text" id="e-title" value="${esc(work.title)}" required />
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+            <div class="form-group">
+              <label>Year *</label>
+              <input type="text" id="e-year" value="${esc(work.year)}" required />
+            </div>
+            <div class="form-group">
+              <label>Category *</label>
+              <select id="e-category">
+                ${cats.map(c => `<option value="${c.slug}" ${work.category === c.slug ? 'selected' : ''}>${c.name}</option>`).join('')}
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Medium</label>
+            <input type="text" id="e-medium" value="${esc(work.medium || '')}" />
+          </div>
+          <div class="form-group">
+            <label>Dimensions</label>
+            <input type="text" id="e-dimensions" value="${esc(work.dimensions || '')}" />
+          </div>
+          <div class="form-group">
+            <label>Description</label>
+            <textarea id="e-description" rows="4">${esc(work.description || '')}</textarea>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+            <div class="form-group">
+              <label>Price / Status</label>
+              <input type="text" id="e-price" value="${esc(work.price || '')}" />
+            </div>
+            <div class="form-group">
+              <label>Available?</label>
+              <select id="e-available">
+                <option value="true"  ${work.available ? 'selected' : ''}>Yes</option>
+                <option value="false" ${!work.available ? 'selected' : ''}>No / Sold</option>
+              </select>
+            </div>
+          </div>
+          <div style="display:flex;gap:1rem;align-items:center;">
+            <button type="submit" class="form-submit" id="save-btn">Save changes</button>
+            <a href="index.html" style="font-size:0.8rem;color:var(--muted);text-decoration:none;">Cancel</a>
+          </div>
+        </form>`;
+
+      renderImageGrid(work.images || []);
+      setupAddZone();
+
+      document.getElementById('edit-form').addEventListener('submit', async e => {
+        e.preventDefault();
+        const btn = document.getElementById('save-btn');
+        btn.textContent = 'Saving…'; btn.disabled = true;
+        try {
+          await Works.update(id, {
+            title:       document.getElementById('e-title').value,
+            year:        document.getElementById('e-year').value,
+            category:    document.getElementById('e-category').value,
+            medium:      document.getElementById('e-medium').value,
+            dimensions:  document.getElementById('e-dimensions').value,
+            description: document.getElementById('e-description').value,
+            price:       document.getElementById('e-price').value,
+            available:   document.getElementById('e-available').value,
+          });
+          showToast('Changes saved.');
+        } catch (err) {
+          showToast('Save failed: ' + err.message);
+        } finally {
+          btn.textContent = 'Save changes'; btn.disabled = false;
+        }
+      });
+    }
+
+    // ── Image grid ────────────────────────────────────────────────────────────
+
+    function renderImageGrid(images) {
+      const grid = document.getElementById('image-grid');
+      if (!grid) return;
+      grid.innerHTML = '';
+
+      if (images.length === 0) {
+        grid.innerHTML = '<p class="no-images-msg">No images yet — add some below.</p>';
+        return;
+      }
+
+      images.forEach((img, i) => {
+        const card = document.createElement('div');
+        card.className = `image-card ${i === 0 ? 'cover-card' : ''}`;
+        card.draggable = true;
+        card.dataset.id = img.id;
+        card.innerHTML = `
+          <img src="${img.image_url.includes('cloudinary') ? img.image_url.replace('/upload/', '/upload/w_300,q_auto,f_auto/') : img.image_url}" alt="Work image ${i+1}" />
+          <div class="image-card-actions">
+            <span class="image-order-badge">${i === 0 ? 'Cover' : `#${i + 1}`}</span>
+            <button class="img-delete-btn" onclick="deleteImage('${img.id}')" title="Remove image">✕ Remove</button>
+          </div>`;
+        setupImageDrag(card);
+        grid.appendChild(card);
+      });
+    }
+
+    async function deleteImage(imageId) {
+      if (!confirm('Remove this image? This cannot be undone.')) return;
+      try {
+        const updated = await Works.deleteImage(id, imageId);
+        currentWork = updated;
+        renderImageGrid(updated.images || []);
+        showToast('Image removed.');
+      } catch (err) {
+        showToast('Failed to remove image: ' + err.message);
+      }
+    }
+
+    // ── Add images zone ───────────────────────────────────────────────────────
+
+    let queuedFiles = [];
+
+    function setupAddZone() {
+      const zone  = document.getElementById('add-zone');
+      const input = document.getElementById('add-image-input');
+      const queue = document.getElementById('upload-queue');
+
+      input.addEventListener('change', () => { queueFiles(Array.from(input.files)); });
+
+      ['dragover','dragenter'].forEach(ev => zone.addEventListener(ev, e => { e.preventDefault(); zone.classList.add('drag-over'); }));
+      ['dragleave','drop'].forEach(ev => zone.addEventListener(ev, () => zone.classList.remove('drag-over')));
+      zone.addEventListener('drop', e => {
+        e.preventDefault();
+        const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+        if (files.length) queueFiles(files);
+      });
+    }
+
+    function queueFiles(files) {
+      queuedFiles = files;
+      const queue = document.getElementById('upload-queue');
+      const btn   = document.getElementById('upload-queued-btn');
+      queue.innerHTML = '';
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = e => {
+          const img = document.createElement('img');
+          img.src = e.target.result;
+          queue.appendChild(img);
+        };
+        reader.readAsDataURL(file);
+      });
+      btn.textContent = `Upload ${files.length} image${files.length !== 1 ? 's' : ''}`;
+      btn.style.display = 'inline-block';
+    }
+
+    async function uploadQueued() {
+      if (!queuedFiles.length) return;
+      const btn = document.getElementById('upload-queued-btn');
+      btn.textContent = 'Uploading…'; btn.disabled = true;
+      try {
+        const fd = new FormData();
+        queuedFiles.forEach(f => fd.append('images', f));
+        const updated = await Works.addImages(id, fd);
+        currentWork = updated;
+        renderImageGrid(updated.images || []);
+        document.getElementById('upload-queue').innerHTML = '';
+        btn.style.display = 'none';
+        queuedFiles = [];
+        showToast(`${updated.images.length} image${updated.images.length !== 1 ? 's' : ''} saved.`);
+      } catch (err) {
+        showToast('Upload failed: ' + err.message);
+        btn.textContent = `Upload ${queuedFiles.length} image${queuedFiles.length !== 1 ? 's' : ''}`;
+        btn.disabled = false;
+      }
+    }
+
+    // ── Drag to reorder images ────────────────────────────────────────────────
+
+    let dragImgSrc = null;
+
+    function setupImageDrag(card) {
+      card.addEventListener('dragstart', e => {
+        dragImgSrc = card;
+        card.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+      });
+      card.addEventListener('dragend', async () => {
+        card.classList.remove('dragging');
+        dragImgSrc = null;
+        await saveImageOrder();
+      });
+      card.addEventListener('dragover', e => {
+        e.preventDefault();
+        if (!dragImgSrc || dragImgSrc === card) return;
+        const grid = document.getElementById('image-grid');
+        const cards = [...grid.querySelectorAll('.image-card')];
+        const srcIdx = cards.indexOf(dragImgSrc);
+        const tgtIdx = cards.indexOf(card);
+        if (srcIdx < tgtIdx) grid.insertBefore(dragImgSrc, card.nextSibling);
+        else grid.insertBefore(dragImgSrc, card);
+        // Update cover badge live
+        [...grid.querySelectorAll('.image-card')].forEach((c, i) => {
+          c.classList.toggle('cover-card', i === 0);
+          const badge = c.querySelector('.image-order-badge');
+          if (badge) badge.textContent = i === 0 ? 'Cover' : `#${i + 1}`;
+        });
+      });
+    }
+
+    async function saveImageOrder() {
+      const grid  = document.getElementById('image-grid');
+      if (!grid) return;
+      const cards = [...grid.querySelectorAll('.image-card')];
+      const order = cards.map((c, i) => ({ id: c.dataset.id, sort_order: i }));
+      try {
+        await Works.reorderImages(id, order);
+      } catch {
+        showToast('Failed to save image order.');
+      }
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    function esc(str) {
+      return String(str).replace(/"/g, '&quot;').replace(/</g, '&lt;');
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg; t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2800);
+    }
+
+    init();
+  </script>
+</body>
+</html>
