@@ -160,9 +160,7 @@ All admin endpoints require `Authorization: Bearer <token>` header.
 
 ### Backend → Railway
 
-Railway is the simplest free-tier host for a Node.js + SQLite app.
-
-1. Push this project to a GitHub repo
+1. Fork this project.
 2. Go to https://railway.app → **New Project → Deploy from GitHub repo**
 3. Select your repo
 4. In **Variables**, add all your `.env` values:
@@ -195,19 +193,6 @@ If you prefer the frontend on Vercel's CDN for faster global delivery:
 4. On Railway, set `FRONTEND_URL=https://your-vercel-app.vercel.app` for CORS
 
 For simplicity, the single-server approach (`SERVE_STATIC=true`) works great and requires no CORS configuration.
-
----
-
-## Future: Shopify Integration
-
-When your partner is ready to sell works, Shopify Buy Buttons can be added with minimal effort:
-
-1. Create a Shopify store and install the **Buy Button channel**
-2. Generate a Buy Button embed code for each product
-3. In the admin edit screen, paste the embed code into a new "Shop embed" field per work
-4. The `work.html` detail page renders it alongside the "Enquire" button
-
-No rebuild or re-architecture needed — it's a pure addition.
 
 ---
 
