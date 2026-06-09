@@ -4,8 +4,18 @@
 const crypto = require('crypto');
 require('dotenv').config();
 
+const IS_PROD = process.env.NODE_ENV === 'production';
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'changeme123';
+
+if (IS_PROD) {
+  if (!process.env.JWT_SECRET || process.env.JWT_SECRET === 'dev-secret-change-me') {
+    throw new Error('FATAL: JWT_SECRET env var must be set in production');
+  }
+  if (!process.env.ADMIN_PASSWORD || process.env.ADMIN_PASSWORD === 'changeme123') {
+    throw new Error('FATAL: ADMIN_PASSWORD env var must be set in production');
+  }
+}
 
 // Minimal JWT implementation (no external dep needed)
 function base64url(str) {
