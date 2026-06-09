@@ -1,11 +1,15 @@
 // server/db/database.js
 const { DatabaseSync } = require('node:sqlite');
 const path = require('path');
+const fs   = require('fs');
 require('dotenv').config();
 
 const DB_PATH = process.env.DB_PATH
   ? path.resolve(process.env.DB_PATH)
   : path.resolve(__dirname, '../../studio.db');
+
+// Ensure the directory exists (needed when DB_PATH points at a volume mount)
+fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
 
 let db;
 
