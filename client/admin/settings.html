@@ -165,7 +165,7 @@
       const btn = document.getElementById('save-btn');
       btn.textContent = 'Saving…'; btn.disabled = true;
       try {
-        await Settings.update({
+        const payload = {
           artist_name:    document.getElementById('s-name').value,
           tagline:        document.getElementById('s-tagline').value,
           hero_title:     document.getElementById('s-hero-title').value,
@@ -176,7 +176,13 @@
           location:       document.getElementById('s-location').value,
           cv_exhibitions: document.getElementById('s-exhibitions').value,
           cv_education:   document.getElementById('s-education').value,
-        });
+        };
+        // Only send fields that have a value — empty strings would overwrite
+        // existing DB values and cause content to disappear on the public site
+        const filtered = Object.fromEntries(
+          Object.entries(payload).filter(([, v]) => v.trim() !== '')
+        );
+        await Settings.update(filtered);
         showToast('Settings saved.');
       } catch {
         showToast('Failed to save settings.');
