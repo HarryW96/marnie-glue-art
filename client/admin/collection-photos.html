@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Collection Photos — Studio Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/style.css" />
+  <style>
+    .photos-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 0.75rem;
+      max-width: 860px;
+      margin-bottom: 2.5rem;
+    }
+
+    .photo-card {
+      position: relative;
+      aspect-ratio: 4/3;
+      overflow: hidden;
+      background: var(--cream-dark);
+      cursor: grab;
+    }
+    .photo-card:active { cursor: grabbing; }
+    .photo-card.dragging { opacity: 0.4; }
+
+    .photo-card img {
+      width: 100%; height: 100%; object-fit: cover; display: block;
+      transition: transform 0.2s;
+    }
+    .photo-card:hover img { transform: scale(1.04); }
+
+    .photo-card-overlay {
+      position: absolute; inset: 0;
+      background: rgba(0,0,0,0);
+      display: flex; align-items: flex-start; justify-content: flex-end;
+      padding: 0.4rem;
+      transition: background 0.2s;
+    }
+    .photo-card:hover .photo-card-overlay { background: rgba(0,0,0,0.25); }
+
+    .photo-delete-btn {
+      background: rgba(0,0,0,0.55); border: none; color: white;
+      width: 1.75rem; height: 1.75rem; font-size: 1rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; transition: opacity 0.2s;
+      flex-shrink: 0;
+    }
+    .photo-card:hover .photo-delete-btn { opacity: 1; }
+
+    .order-hint {
+      position: absolute; bottom: 0.3rem; left: 0.4rem;
+      font-size: 0.62rem; color: rgba(255,255,255,0.7);
+      font-family: var(--font-body); letter-spacing: 0.05em;
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <a href="../index.html" class="nav-logo">Studio</a>
+    <div class="nav-links"><a href="../index.html">View Site</a></div>
+    <button onclick="Auth.logout()" style="background:none;border:none;font-family:var(--font-body);font-size:0.75rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);cursor:pointer;">Log out</button>
+  </nav>
+
+  <div class="admin-layout">
+    <aside class="admin-sidebar">
+      <p class="admin-sidebar-title">Manage</p>
+      <a href="index.html" class="admin-nav-link">All Works</a>
+      <a href="upload.html" class="admin-nav-link">Add New Work</a>
+      <a href="categories.html" class="admin-nav-link active">Categories</a>
+      <a href="shop.html" class="admin-nav-link">Prints &amp; Odd Bits</a>
+      <a href="enquiries.html" class="admin-nav-link">Enquiries</a>
+      <a href="settings.html" class="admin-nav-link">Settings</a>
+    </aside>
+
+    <main class="admin-main">
+      <a href="categories.html" style="display:inline-block;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);text-decoration:none;margin-bottom:1.5rem;">← Back to Categories</a>
+      <h1 class="admin-heading" id="page-heading">Collection Photos</h1>
+      <p style="font-size:0.88rem;color:var(--muted);margin-bottom:2rem;max-width:480px;">
+        Upload press photos, exhibition shots, or behind-the-scenes images. These appear on the public collection page. Drag to reorder.
+      </p>
+
+      <!-- Existing photos -->
+      <div class="photos-grid" id="photos-grid"></div>
+
+      <!-- Upload -->
+      <h2 style="font-family:var(--font-display);font-size:1.3rem;font-weight:300;color:var(--deep-brown);margin-bottom:1rem;">Add photos</h2>
+      <div style="max-width:560px;">
+        <div class="upload-dropzone" id="dropzone" style="position:relative;margin-bottom:1rem;">
+          <span>Drop photos here</span>
+          or click to browse — select multiple (JPG, PNG, max 20 MB each)
+          <input type="file" id="photo-input" accept="image/*" multiple
+            style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;" />
+        </div>
+        <div class="upload-preview" id="upload-preview" style="margin-bottom:1rem;"></div>
+        <button class="form-submit" id="upload-btn" style="display:none;" onclick="uploadPhotos()">Upload photos</button>
+      </div>
+    </main>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="../js/api.js"></script>
+  <script>
+    const catId = new URLSearchParams(location.search).get('id');
+    if (!catId) location.href = 'categories.html';
+
+    let photos = [];
+    let pendingFiles = [];
+    let dragSrc = null;
+
+    async function init() {
+      const ok = await Auth.check();
+      if (!ok) { location.href = 'login.html'; return; }
+
+      try {
+        const [cats, fetchedPhotos] = await Promise.all([
+          Categories.list(),
+          CollectionPhotos.list(catId),
+        ]);
+        const cat = cats.find(c => c.id === catId);
+        if (cat) document.getElementById('page-heading').textContent = `${cat.name} — Photos`;
+        photos = fetchedPhotos;
+        renderGrid();
+      } catch {
+        showToast('Failed to load photos.');
+      }
+    }
+
+    function renderGrid() {
+      const grid = document.getElementById('photos-grid');
+      grid.innerHTML = '';
+
+      if (photos.length === 0) {
+        grid.innerHTML = '<p style="color:var(--muted);font-size:0.88rem;font-style:italic;font-family:var(--font-display);grid-column:1/-1;">No photos yet.</p>';
+        return;
+      }
+
+      photos.forEach((photo, i) => {
+        const card = document.createElement('div');
+        card.className = 'photo-card';
+        card.draggable = true;
+        card.dataset.id = photo.id;
+        card.innerHTML = `
+          <img src="${cloudinaryUrl(photo.image_url, { width: 400 })}" alt="Collection photo" loading="lazy" />
+          <div class="photo-card-overlay">
+            <button class="photo-delete-btn" title="Delete" onclick="deletePhoto('${photo.id}')">×</button>
+          </div>
+          <span class="order-hint">${i + 1}</span>`;
+        setupDrag(card);
+        grid.appendChild(card);
+      });
+    }
+
+    async function deletePhoto(photoId) {
+      if (!confirm('Delete this photo?')) return;
+      try {
+        await CollectionPhotos.delete(catId, photoId);
+        photos = photos.filter(p => p.id !== photoId);
+        renderGrid();
+      } catch {
+        showToast('Failed to delete photo.');
+      }
+    }
+
+    // ── File input & preview ─────────────────────────────────────────────────
+
+    const photoInput = document.getElementById('photo-input');
+    const dropzone   = document.getElementById('dropzone');
+    const preview    = document.getElementById('upload-preview');
+    const uploadBtn  = document.getElementById('upload-btn');
+
+    photoInput.addEventListener('change', () => setPendingFiles(photoInput.files));
+
+    ['dragover','dragenter'].forEach(ev => dropzone.addEventListener(ev, e => {
+      e.preventDefault(); dropzone.classList.add('drag-over');
+    }));
+    ['dragleave','drop'].forEach(ev => dropzone.addEventListener(ev, () =>
+      dropzone.classList.remove('drag-over')
+    ));
+    dropzone.addEventListener('drop', e => {
+      e.preventDefault();
+      const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+      if (files.length) setPendingFiles(files);
+    });
+
+    function setPendingFiles(files) {
+      pendingFiles = Array.from(files);
+      preview.innerHTML = '';
+      pendingFiles.forEach((file, i) => {
+        const reader = new FileReader();
+        reader.onload = e => {
+          const wrap = document.createElement('div');
+          wrap.style.cssText = 'position:relative;display:inline-block;';
+          wrap.innerHTML = `
+            <img src="${e.target.result}" style="width:100px;height:75px;object-fit:cover;display:block;" />
+            <span style="position:absolute;top:3px;left:3px;background:var(--deep-brown);color:var(--cream);font-size:0.6rem;padding:2px 4px;">${i + 1}</span>`;
+          preview.appendChild(wrap);
+        };
+        reader.readAsDataURL(file);
+      });
+      uploadBtn.style.display = pendingFiles.length ? 'inline-block' : 'none';
+    }
+
+    async function uploadPhotos() {
+      if (!pendingFiles.length) return;
+      const btn = uploadBtn;
+      btn.textContent = 'Uploading…'; btn.disabled = true;
+      try {
+        const fd = new FormData();
+        pendingFiles.forEach(f => fd.append('photos', f));
+        photos = await CollectionPhotos.upload(catId, fd);
+        renderGrid();
+        pendingFiles = [];
+        preview.innerHTML = '';
+        photoInput.value = '';
+        btn.style.display = 'none';
+        showToast('Photos uploaded.');
+      } catch (err) {
+        showToast(err.message || 'Upload failed.');
+      } finally {
+        btn.textContent = 'Upload photos'; btn.disabled = false;
+      }
+    }
+
+    // ── Drag to reorder ──────────────────────────────────────────────────────
+
+    function setupDrag(card) {
+      card.addEventListener('dragstart', e => {
+        dragSrc = card;
+        card.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+      });
+      card.addEventListener('dragend', () => {
+        card.classList.remove('dragging');
+        dragSrc = null;
+        saveOrder();
+      });
+      card.addEventListener('dragover', e => {
+        e.preventDefault();
+        if (!dragSrc || dragSrc === card) return;
+        const grid = document.getElementById('photos-grid');
+        const cards = [...grid.querySelectorAll('.photo-card')];
+        const si = cards.indexOf(dragSrc), ti = cards.indexOf(card);
+        if (si < ti) grid.insertBefore(dragSrc, card.nextSibling);
+        else grid.insertBefore(dragSrc, card);
+      });
+    }
+
+    async function saveOrder() {
+      const cards = [...document.querySelectorAll('.photo-card')];
+      const order = cards.map((c, i) => ({ id: c.dataset.id, sort_order: i + 1 }));
+      // Update order hints
+      cards.forEach((c, i) => { c.querySelector('.order-hint').textContent = i + 1; });
+      try {
+        await CollectionPhotos.reorder(catId, order);
+      } catch {
+        showToast('Failed to save order.');
+      }
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg; t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2800);
+    }
+
+    init();
+  </script>
+</body>
+</html>

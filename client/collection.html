@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Marnie Glue — Collection</title>
+  <link rel="icon" type="image/png" href="/client/img/favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <meta name="description" content="" />
+  <meta property="og:site_name" content="Studio" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="" />
+  <meta property="og:description" content="" />
+  <meta property="og:image" content="" />
+  <meta property="og:url" content="" />
+  <meta name="twitter:card" content="summary_large_image" />
+</head>
+<body>
+  <nav class="nav">
+    <a href="index.html" class="nav-logo" id="nav-logo">Studio</a>
+    <div class="nav-links">
+      <a href="index.html">Works</a>
+      <a href="shop.html">Shop</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+    </div>
+    <a href="admin/index.html" class="nav-admin" title="Admin">&#9654;</a>
+  </nav>
+
+  <div class="collection-page-header">
+    <a href="index.html" class="collection-back-link">← All works</a>
+    <h1 class="collection-page-title" id="collection-title">Collection</h1>
+    <p class="collection-page-desc" id="collection-desc"></p>
+  </div>
+
+  <main class="gallery" id="gallery">
+    <p class="gallery-empty" style="padding:4rem 0;color:var(--muted);font-style:italic;font-family:var(--font-display);font-size:1.2rem;">Loading…</p>
+  </main>
+
+  <section class="collection-photos-section" id="collection-photos" style="display:none;">
+    <h2 class="collection-links-heading">From the Exhibition</h2>
+    <div class="collection-photos-grid" id="photos-grid"></div>
+  </section>
+
+  <section class="collection-links-section" id="collection-links" style="display:none;">
+    <h2 class="collection-links-heading">Press &amp; Links</h2>
+    <div id="links-list"></div>
+  </section>
+
+  <footer class="footer">
+    <p>© <span id="year"></span> <span id="footer-name">Studio</span>. All rights reserved.</p>
+    <p class="footer-note">Available for commissions &amp; exhibitions.</p>
+  </footer>
+
+  <script src="js/api.js"></script>
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    const slug = new URLSearchParams(location.search).get('slug');
+    if (!slug) location.href = 'index.html';
+
+    async function init() {
+      try {
+        const [categories, works, settings] = await Promise.all([
+          Categories.list(),
+          Works.list(slug),
+          Settings.get(),
+        ]);
+
+        // Find category id for photos fetch
+        const catPrelim = categories.find(c => c.slug === slug);
+        const collectionPhotos = catPrelim
+          ? await CollectionPhotos.list(catPrelim.id).catch(() => [])
+          : [];
+
+        // Apply site name
+        if (settings.artist_name) {
+          document.getElementById('nav-logo').textContent    = settings.artist_name;
+          document.getElementById('footer-name').textContent = settings.artist_name;
+        }
+
+        // Find matching category
+        const cat = categories.find(c => c.slug === slug);
+        if (!cat) { location.href = 'index.html'; return; }
+
+        document.title = `${cat.name} — ${settings.artist_name || 'Studio'}`;
+        document.getElementById('collection-title').textContent = cat.name;
+
+        if (cat.description) {
+          document.getElementById('collection-desc').textContent = cat.description;
+        }
+
+        setPageMeta({
+          title: `${cat.name} — ${settings.artist_name || 'Studio'}`,
+          description: cat.description || `The ${cat.name} collection`,
+          image: works[0]?.images?.[0]?.image_url || settings.portrait_url || '',
+        });
+
+        renderGallery(works);
+        renderPhotos(collectionPhotos);
+        renderLinks(cat.links || []);
+      } catch (e) {
+        document.getElementById('gallery').innerHTML =
+          '<p class="gallery-empty">Could not load collection.</p>';
+      }
+    }
+
+    function renderGallery(works) {
+      const gallery = document.getElementById('gallery');
+      gallery.innerHTML = '';
+
+      if (works.length === 0) {
+        gallery.innerHTML = '<p class="gallery-empty">No works in this collection yet.</p>';
+        return;
+      }
+
+      works.forEach((work, i) => {
+        const item = document.createElement('div');
+        item.className = 'gallery-item';
+        item.style.animationDelay = `${i * 0.06}s`;
+
+        const coverImg = work.images?.[0];
+        const soldBadge = !work.available ? '<div class="sold-badge">Sold</div>' : '';
+        const imgHtml = coverImg
+          ? `<div class="gallery-thumb-wrap"><img class="gallery-thumb" src="${cloudinaryUrl(coverImg.image_url, { width: 600 })}" alt="${work.title}" loading="lazy" />${soldBadge}</div>`
+          : `<div class="gallery-thumb-wrap"><div class="gallery-thumb-placeholder" style="background:${work.colour}22">
+               <svg width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg" opacity="0.35">
+                 <rect x="8" y="8" width="44" height="44" rx="2" stroke="${work.colour}" stroke-width="1.5" fill="none"/>
+                 <circle cx="22" cy="22" r="5" stroke="${work.colour}" stroke-width="1.5" fill="none"/>
+                 <path d="M8 38l12-10 10 8 8-6 14 14" stroke="${work.colour}" stroke-width="1.5" fill="none"/>
+               </svg>
+             </div>${soldBadge}</div>`;
+
+        item.innerHTML = `
+          ${imgHtml}
+          <div class="gallery-caption">
+            <div class="gallery-caption-title">${work.title}</div>
+            <div class="gallery-caption-meta">${work.year}</div>
+          </div>`;
+
+        item.addEventListener('click', () => { location.href = `work.html?id=${work.id}`; });
+        gallery.appendChild(item);
+      });
+    }
+
+    function renderPhotos(photos) {
+      if (!photos.length) return;
+      const section = document.getElementById('collection-photos');
+      const grid    = document.getElementById('photos-grid');
+      photos.forEach((photo, i) => {
+        const thumb = document.createElement('div');
+        thumb.className = 'collection-photo-thumb';
+        thumb.innerHTML = `<img src="${cloudinaryUrl(photo.image_url, { width: 600 })}" alt="Exhibition photo" loading="lazy" />`;
+        thumb.addEventListener('click', () => openLightbox(photos, i));
+        grid.appendChild(thumb);
+      });
+      section.style.display = 'block';
+    }
+
+    function openLightbox(photos, startIndex) {
+      let current = startIndex;
+
+      const overlay = document.createElement('div');
+      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:1000;display:flex;align-items:center;justify-content:center;cursor:pointer;';
+
+      function render() {
+        const hasMultiple = photos.length > 1;
+        overlay.innerHTML = `
+          <button class="lb-close" title="Close" style="position:absolute;top:1.25rem;right:1.5rem;background:none;border:none;color:rgba(255,255,255,0.7);font-size:2rem;cursor:pointer;line-height:1;">×</button>
+          ${hasMultiple ? `<button class="lb-prev" style="position:absolute;left:1.25rem;background:none;border:none;color:rgba(255,255,255,0.7);font-size:2.5rem;cursor:pointer;line-height:1;padding:1rem;">‹</button>` : ''}
+          <img src="${cloudinaryUrl(photos[current].image_url, { width: 1400 })}" style="max-width:90vw;max-height:85vh;object-fit:contain;cursor:default;" />
+          ${hasMultiple ? `<button class="lb-next" style="position:absolute;right:1.25rem;background:none;border:none;color:rgba(255,255,255,0.7);font-size:2.5rem;cursor:pointer;line-height:1;padding:1rem;">›</button>` : ''}
+          ${hasMultiple ? `<div style="position:absolute;bottom:1.25rem;color:rgba(255,255,255,0.4);font-size:0.75rem;font-family:var(--font-body);letter-spacing:0.1em;">${current + 1} / ${photos.length}</div>` : ''}`;
+      }
+
+      render();
+
+      overlay.addEventListener('click', e => {
+        if (e.target.classList.contains('lb-close') || e.target === overlay) { overlay.remove(); cleanup(); }
+        else if (e.target.classList.contains('lb-prev')) { current = (current - 1 + photos.length) % photos.length; render(); }
+        else if (e.target.classList.contains('lb-next')) { current = (current + 1) % photos.length; render(); }
+      });
+
+      function onKey(e) {
+        if (e.key === 'Escape')      { overlay.remove(); cleanup(); }
+        if (e.key === 'ArrowLeft')   { current = (current - 1 + photos.length) % photos.length; render(); }
+        if (e.key === 'ArrowRight')  { current = (current + 1) % photos.length; render(); }
+      }
+      function cleanup() { document.removeEventListener('keydown', onKey); }
+      document.addEventListener('keydown', onKey);
+
+      document.body.appendChild(overlay);
+    }
+
+    function renderLinks(links) {
+      if (!links.length) return;
+      const section = document.getElementById('collection-links');
+      const list    = document.getElementById('links-list');
+      links.forEach(link => {
+        const a = document.createElement('a');
+        a.href = link.url;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        a.className = 'collection-link-item';
+        a.innerHTML = `<span>${link.label}</span><span class="collection-link-arrow">↗</span>`;
+        list.appendChild(a);
+      });
+      section.style.display = 'block';
+    }
+
+    init();
+  </script>
+</body>
+</html>

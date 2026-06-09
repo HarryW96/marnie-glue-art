@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Settings — Studio Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+  <nav class="nav">
+    <a href="../index.html" class="nav-logo">Studio</a>
+    <div class="nav-links"><a href="../index.html">View Site</a></div>
+    <button onclick="Auth.logout()" style="background:none;border:none;font-family:var(--font-body);font-size:0.75rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);cursor:pointer;">Log out</button>
+  </nav>
+
+  <div class="admin-layout">
+    <aside class="admin-sidebar">
+      <p class="admin-sidebar-title">Manage</p>
+      <a href="index.html" class="admin-nav-link">All Works</a>
+      <a href="upload.html" class="admin-nav-link">Add New Work</a>
+      <a href="categories.html" class="admin-nav-link">Categories</a>
+      <a href="shop.html" class="admin-nav-link">Prints &amp; Odd Bits</a>
+      <a href="enquiries.html" class="admin-nav-link">Enquiries</a>
+      <a href="settings.html" class="admin-nav-link active">Settings</a>
+    </aside>
+
+    <main class="admin-main">
+      <h1 class="admin-heading">Settings</h1>
+      <div style="max-width:560px;">
+
+        <!-- Portrait -->
+        <div style="margin-bottom:2.5rem;padding-bottom:2.5rem;border-bottom:1px solid var(--cream-dark);">
+          <h2 style="font-family:var(--font-body);font-size:0.7rem;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);margin-bottom:1.25rem;">Portrait photo</h2>
+          <div style="display:flex;gap:1.5rem;align-items:flex-start;">
+            <div id="portrait-thumb" style="width:90px;aspect-ratio:3/4;background:var(--cream-dark);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-style:italic;font-size:0.78rem;color:var(--sand);overflow:hidden;">
+              <span id="portrait-thumb-label">No photo</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:0.6rem;padding-top:0.25rem;">
+              <input type="file" id="portrait-file" accept="image/*" style="display:none;" />
+              <button type="button" id="portrait-choose-btn" style="display:inline-block;width:fit-content;padding:0.55rem 1.1rem;background:var(--cream-dark);border:1px solid var(--sand);font-family:var(--font-body);font-size:0.78rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--deep-brown);cursor:pointer;">
+                Choose photo
+              </button>
+              <span id="portrait-status" style="font-size:0.8rem;color:var(--muted);line-height:1.5;"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Site settings -->
+        <form class="upload-form" id="settings-form">
+          <div class="form-group">
+            <label for="s-name">Artist / Studio name</label>
+            <input type="text" id="s-name" placeholder="Your name or studio name" />
+          </div>
+          <div class="form-group">
+            <label for="s-tagline">Tagline (shown on homepage)</label>
+            <input type="text" id="s-tagline" placeholder="e.g. Mixed Media &amp; Sculpture" />
+          </div>
+          <div class="form-group">
+            <label for="s-hero-title">Homepage heading</label>
+            <input type="text" id="s-hero-title" placeholder="e.g. Works that live between worlds" />
+            <p style="font-size:0.78rem;color:var(--muted);margin-top:0.35rem;line-height:1.5;">The large heading on the gallery page. Leave blank to keep the default.</p>
+          </div>
+          <div class="form-group">
+            <label for="s-bio">Short bio (shown on About page)</label>
+            <textarea id="s-bio" rows="3" placeholder="A sentence or two about your practice..."></textarea>
+          </div>
+          <div class="form-group">
+            <label for="s-about-body">About page — additional text</label>
+            <p style="font-size:0.8rem;color:var(--muted);margin-bottom:0.5rem;line-height:1.6;">Shown below the bio. Separate paragraphs with a blank line.</p>
+            <textarea id="s-about-body" rows="6" placeholder="Write about your process, materials, influences...&#10;&#10;A second paragraph can go here."></textarea>
+          </div>
+          <div class="form-group">
+            <label for="s-email">Contact email</label>
+            <input type="email" id="s-email" placeholder="studio@example.com" />
+          </div>
+          <div class="form-group">
+            <label for="s-instagram">Instagram handle</label>
+            <input type="text" id="s-instagram" placeholder="@studio.artist" />
+          </div>
+          <div class="form-group">
+            <label for="s-location">Location</label>
+            <input type="text" id="s-location" placeholder="City, Country" />
+          </div>
+
+          <!-- CV -->
+          <div class="form-group">
+            <label for="s-exhibitions">Selected exhibitions</label>
+            <p style="font-size:0.8rem;color:var(--muted);margin-bottom:0.5rem;line-height:1.6;">One entry per line — start with the year: <code style="font-size:0.78rem;background:var(--cream-dark);padding:0.1em 0.35em;">2024 Group Show, The Baltic, Gateshead</code></p>
+            <textarea id="s-exhibitions" rows="6" placeholder="2024 Group Show, The Baltic, Gateshead&#10;2023 Solo Exhibition, Castlegate Arts, Durham&#10;2022 Northern Open, Hartlepool Art Gallery"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="s-education">Education</label>
+            <p style="font-size:0.8rem;color:var(--muted);margin-bottom:0.5rem;line-height:1.6;">One entry per line — start with the year.</p>
+            <textarea id="s-education" rows="3" placeholder="2018 BA Fine Art, Northumbria University"></textarea>
+          </div>
+
+          <div style="padding:1.25rem;background:var(--cream-dark);border-left:3px solid var(--sand);margin-top:0.5rem;">
+            <strong style="display:block;margin-bottom:0.4rem;font-size:0.82rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--deep-brown);">Shopify Buy Buttons</strong>
+            <p style="font-size:0.85rem;color:var(--muted);line-height:1.7;">To add a buy button to a work, go to <strong>Edit Work</strong> and paste the embed code from your Shopify Buy Button channel (Sales channels → Buy Button → Create button → Copy code). The button appears on the public work page for available works.</p>
+          </div>
+
+          <button type="submit" class="form-submit" id="save-btn">Save settings</button>
+        </form>
+      </div>
+    </main>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="../js/api.js"></script>
+  <script>
+    async function init() {
+      const ok = await Auth.check();
+      if (!ok) { location.href = 'login.html'; return; }
+      try {
+        const s = await Settings.get();
+        if (s.artist_name)    document.getElementById('s-name').value        = s.artist_name;
+        if (s.tagline)        document.getElementById('s-tagline').value      = s.tagline;
+        if (s.hero_title)     document.getElementById('s-hero-title').value   = s.hero_title;
+        if (s.bio)            document.getElementById('s-bio').value          = s.bio;
+        if (s.about_body)     document.getElementById('s-about-body').value   = s.about_body;
+        if (s.email)          document.getElementById('s-email').value        = s.email;
+        if (s.instagram)      document.getElementById('s-instagram').value    = s.instagram;
+        if (s.location)       document.getElementById('s-location').value     = s.location;
+        if (s.cv_exhibitions) document.getElementById('s-exhibitions').value  = s.cv_exhibitions;
+        if (s.cv_education)   document.getElementById('s-education').value    = s.cv_education;
+        if (s.portrait_url)   setPortraitThumb(s.portrait_url);
+      } catch {}
+    }
+
+    function setPortraitThumb(url) {
+      const thumb = document.getElementById('portrait-thumb');
+      thumb.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:cover;display:block;" alt="Portrait" />`;
+    }
+
+    // Portrait upload — fires as soon as a file is chosen
+    document.getElementById('portrait-choose-btn').addEventListener('click', () => {
+      document.getElementById('portrait-file').click();
+    });
+
+    document.getElementById('portrait-file').addEventListener('change', async function () {
+      const file = this.files[0];
+      if (!file) return;
+      const status = document.getElementById('portrait-status');
+      const btn = document.getElementById('portrait-choose-btn');
+      status.textContent = 'Uploading…';
+      btn.disabled = true;
+      try {
+        const data = await Settings.uploadPortrait(file);
+        setPortraitThumb(data.portrait_url);
+        status.textContent = 'Portrait updated.';
+      } catch (err) {
+        status.textContent = 'Upload failed. Please try again.';
+      } finally {
+        btn.disabled = false;
+        this.value = '';
+      }
+    });
+
+    document.getElementById('settings-form').addEventListener('submit', async e => {
+      e.preventDefault();
+      const btn = document.getElementById('save-btn');
+      btn.textContent = 'Saving…'; btn.disabled = true;
+      try {
+        await Settings.update({
+          artist_name:    document.getElementById('s-name').value,
+          tagline:        document.getElementById('s-tagline').value,
+          hero_title:     document.getElementById('s-hero-title').value,
+          bio:            document.getElementById('s-bio').value,
+          about_body:     document.getElementById('s-about-body').value,
+          email:          document.getElementById('s-email').value,
+          instagram:      document.getElementById('s-instagram').value,
+          location:       document.getElementById('s-location').value,
+          cv_exhibitions: document.getElementById('s-exhibitions').value,
+          cv_education:   document.getElementById('s-education').value,
+        });
+        showToast('Settings saved.');
+      } catch {
+        showToast('Failed to save settings.');
+      } finally {
+        btn.textContent = 'Save settings'; btn.disabled = false;
+      }
+    });
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg; t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2800);
+    }
+
+    init();
+  </script>
+</body>
+</html>

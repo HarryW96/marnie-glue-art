@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Add Work — Studio Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+  <nav class="nav">
+    <a href="../index.html" class="nav-logo">Studio</a>
+    <div class="nav-links"><a href="../index.html">View Site</a></div>
+    <button onclick="Auth.logout()" style="background:none;border:none;font-family:var(--font-body);font-size:0.75rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);cursor:pointer;">Log out</button>
+  </nav>
+
+  <div class="admin-layout">
+    <aside class="admin-sidebar">
+      <p class="admin-sidebar-title">Manage</p>
+      <a href="index.html" class="admin-nav-link">All Works</a>
+      <a href="upload.html" class="admin-nav-link active">Add New Work</a>
+      <a href="categories.html" class="admin-nav-link">Categories</a>
+      <a href="shop.html" class="admin-nav-link">Prints &amp; Odd Bits</a>
+      <a href="enquiries.html" class="admin-nav-link">Enquiries</a>
+      <a href="settings.html" class="admin-nav-link">Settings</a>
+    </aside>
+
+    <main class="admin-main">
+      <div class="upload-section">
+        <h1 class="admin-heading">Add New Work</h1>
+
+        <div id="upload-success" class="admin-success" style="margin-bottom:1.5rem;">
+          Work saved successfully. <a href="index.html" style="color:var(--rust)">View all works →</a>
+        </div>
+
+        <form class="upload-form" id="upload-form" enctype="multipart/form-data">
+
+          <div class="form-group">
+            <label>Images (up to 10)</label>
+            <div class="upload-dropzone" id="dropzone" style="position:relative;">
+              <span>Drop images here</span>
+              or click to browse — select multiple (JPG, PNG, WEBP, max 20 MB each)
+              <input type="file" id="image-input" name="images" accept="image/*" multiple
+                style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;" />
+            </div>
+            <div class="upload-preview" id="upload-preview"></div>
+          </div>
+
+          <div class="form-group">
+            <label for="title">Title *</label>
+            <input type="text" id="title" name="title" placeholder="e.g. Sediment I" required />
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+            <div class="form-group">
+              <label for="year">Year *</label>
+              <input type="text" id="year" name="year" placeholder="2024" required />
+            </div>
+            <div class="form-group">
+              <label for="category">Category *</label>
+              <select id="category" name="category">
+                <option value="">Loading…</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="medium">Medium</label>
+            <input type="text" id="medium" name="medium" placeholder="e.g. Stoneware, iron oxide, found slate" />
+          </div>
+
+          <div class="form-group">
+            <label for="dimensions">Dimensions</label>
+            <input type="text" id="dimensions" name="dimensions" placeholder="e.g. 42 × 28 × 18 cm" />
+          </div>
+
+          <div class="form-group">
+            <label for="description">Description</label>
+            <textarea id="description" name="description" rows="4" placeholder="Notes on the work, materials, process..."></textarea>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+            <div class="form-group">
+              <label for="price">Price / Status</label>
+              <input type="text" id="price" name="price" placeholder="e.g. £1,400 or Sold" />
+            </div>
+            <div class="form-group">
+              <label for="available">Available for sale?</label>
+              <select id="available" name="available">
+                <option value="1">Yes</option>
+                <option value="0">No / Sold</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:1rem;align-items:center;">
+            <button type="submit" class="form-submit" id="submit-btn">Save work</button>
+            <a href="index.html" style="font-size:0.8rem;color:var(--muted);text-decoration:none;">Cancel</a>
+          </div>
+
+        </form>
+      </div>
+    </main>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script>
+    Auth.check().then(ok => { if (!ok) location.href = 'login.html'; });
+
+    // Populate category dropdown from API
+    Categories.list().then(cats => {
+      const sel = document.getElementById('category');
+      sel.innerHTML = cats.map(c => `<option value="${c.slug}">${c.name}</option>`).join('');
+      if (cats.length === 0) sel.innerHTML = '<option value="">No categories yet — add one first</option>';
+    }).catch(() => {});
+
+    // Image previews — multiple files
+    const imageInput = document.getElementById('image-input');
+    const dropzone   = document.getElementById('dropzone');
+    const preview    = document.getElementById('upload-preview');
+
+    imageInput.addEventListener('change', () => renderPreviews(imageInput.files));
+
+    ['dragover','dragenter'].forEach(ev => dropzone.addEventListener(ev, e => { e.preventDefault(); dropzone.classList.add('drag-over'); }));
+    ['dragleave','drop'].forEach(ev => dropzone.addEventListener(ev, () => dropzone.classList.remove('drag-over')));
+    dropzone.addEventListener('drop', e => {
+      e.preventDefault();
+      const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+      if (files.length) {
+        const dt = new DataTransfer();
+        files.forEach(f => dt.items.add(f));
+        imageInput.files = dt.files;
+        renderPreviews(imageInput.files);
+      }
+    });
+
+    function renderPreviews(files) {
+      preview.innerHTML = '';
+      Array.from(files).forEach((file, i) => {
+        const reader = new FileReader();
+        reader.onload = e => {
+          const wrap = document.createElement('div');
+          wrap.style.cssText = 'position:relative;display:inline-block;';
+          wrap.innerHTML = `
+            <img src="${e.target.result}" style="width:120px;height:120px;object-fit:cover;display:block;" />
+            <span style="position:absolute;top:4px;left:4px;background:var(--deep-brown);color:var(--cream);font-size:0.65rem;padding:2px 5px;">${i + 1}</span>`;
+          preview.appendChild(wrap);
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    // Form submit
+    document.getElementById('upload-form').addEventListener('submit', async e => {
+      e.preventDefault();
+      const btn = document.getElementById('submit-btn');
+      btn.textContent = 'Uploading…';
+      btn.disabled = true;
+
+      try {
+        const fd = new FormData(e.target);
+        await Works.create(fd);
+        document.getElementById('upload-success').style.display = 'block';
+        e.target.reset();
+        preview.innerHTML = '';
+        window.scrollTo(0, 0);
+      } catch (err) {
+        alert('Failed to save work: ' + err.message);
+      } finally {
+        btn.textContent = 'Save work';
+        btn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

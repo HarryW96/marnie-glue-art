@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Marnie Glue — About</title>
+  <link rel="icon" type="image/png" href="/client/img/favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <meta name="description" content="" />
+  <meta property="og:site_name" content="Studio" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="" />
+  <meta property="og:description" content="" />
+  <meta property="og:image" content="" />
+  <meta property="og:url" content="" />
+  <meta name="twitter:card" content="summary_large_image" />
+</head>
+<body>
+  <nav class="nav">
+    <a href="index.html" class="nav-logo" id="nav-logo">Studio</a>
+    <div class="nav-links">
+      <a href="index.html">Works</a>
+      <a href="shop.html">Shop</a>
+      <a href="about.html" class="active">About</a>
+      <a href="contact.html">Contact</a>
+    </div>
+    <a href="admin/index.html" class="nav-admin" title="Admin">&#9654;</a>
+  </nav>
+
+  <section class="about-layout">
+    <div class="about-image-col">
+      <div class="about-portrait-placeholder" id="about-portrait">
+        <span>Portrait</span>
+      </div>
+      <div class="about-cv">
+        <h3>Selected Exhibitions</h3>
+        <ul class="cv-list" id="exhibitions-list">
+          <li><span class="cv-year">2024</span> Group Show, The Baltic, Gateshead</li>
+          <li><span class="cv-year">2023</span> Solo Exhibition, Castlegate Arts, Durham</li>
+          <li><span class="cv-year">2022</span> Northern Open, Hartlepool Art Gallery</li>
+          <li><span class="cv-year">2021</span> Material Matters, Newcastle Arts Centre</li>
+        </ul>
+        <h3>Education</h3>
+        <ul class="cv-list" id="education-list">
+          <li><span class="cv-year">2018</span> BA Fine Art, Northumbria University</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="about-text-col">
+      <p class="about-label">Artist Statement</p>
+      <h2 class="about-heading">Where the material<br/><em>holds memory</em></h2>
+      <div class="about-body">
+        <p id="about-bio">My practice sits at the intersection of the found and the formed — gathering materials that carry their own histories and allowing them to speak through structure and weight.</p>
+        <p>There is something in the tension between fragility and permanence that drives my work. Clay remembers the pressure of a hand. Rust marks the passage of time. Fabric holds the shape of a body long absent. These residues become the subject.</p>
+        <p>My studio is in the north of England, where the landscape — its coast, its industry, its layered geology — is an ever-present collaborator. I take commissions for private collections and am open to exhibition proposals.</p>
+        <div id="about-extra"></div>
+      </div>
+      <a href="contact.html" class="cta-link">Get in touch &rarr;</a>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <p>© <span id="year"></span> <span id="footer-name">Studio</span>. All rights reserved.</p>
+    <p class="footer-note">Available for commissions &amp; exhibitions.</p>
+  </footer>
+
+  <script src="js/api.js"></script>
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    function escHtml(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    function renderCvList(id, text) {
+      const ul = document.getElementById(id);
+      if (!ul || !text.trim()) return;
+      ul.innerHTML = text.trim().split('\n')
+        .filter(Boolean)
+        .map(line => {
+          const m = line.match(/^(\d{4})\s+(.+)$/);
+          return m
+            ? `<li><span class="cv-year">${m[1]}</span> ${escHtml(m[2])}</li>`
+            : `<li>${escHtml(line)}</li>`;
+        })
+        .join('');
+    }
+
+    Settings.get().then(s => {
+      if (s.artist_name) {
+        document.getElementById('nav-logo').textContent    = s.artist_name;
+        document.getElementById('footer-name').textContent = s.artist_name;
+      }
+      if (s.bio) document.getElementById('about-bio').textContent = s.bio;
+
+      if (s.about_body) {
+        const extra = document.getElementById('about-extra');
+        s.about_body.trim().split(/\n\n+/).forEach(para => {
+          const p = document.createElement('p');
+          p.textContent = para.trim();
+          extra.appendChild(p);
+        });
+      }
+
+      setPageMeta({
+        title: `About — ${s.artist_name || 'Studio'}`,
+        description: s.bio || '',
+        image: s.portrait_url || '',
+      });
+
+      if (s.portrait_url) {
+        const el = document.getElementById('about-portrait');
+        el.innerHTML = '';
+        const img = document.createElement('img');
+        img.src = cloudinaryUrl(s.portrait_url, { width: 600 });
+        img.alt = s.artist_name || 'Portrait';
+        el.appendChild(img);
+      }
+
+      if (s.cv_exhibitions) renderCvList('exhibitions-list', s.cv_exhibitions);
+      if (s.cv_education)   renderCvList('education-list',   s.cv_education);
+    }).catch(() => {});
+  </script>
+</body>
+</html>

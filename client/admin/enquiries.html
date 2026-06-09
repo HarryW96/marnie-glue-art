@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Enquiries — Studio Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+  <nav class="nav">
+    <a href="../index.html" class="nav-logo">Studio</a>
+    <div class="nav-links"><a href="../index.html">View Site</a></div>
+    <button onclick="Auth.logout()" style="background:none;border:none;font-family:var(--font-body);font-size:0.75rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);cursor:pointer;">Log out</button>
+  </nav>
+
+  <div class="admin-layout">
+    <aside class="admin-sidebar">
+      <p class="admin-sidebar-title">Manage</p>
+      <a href="index.html" class="admin-nav-link">All Works</a>
+      <a href="upload.html" class="admin-nav-link">Add New Work</a>
+      <a href="categories.html" class="admin-nav-link">Categories</a>
+      <a href="shop.html" class="admin-nav-link">Prints &amp; Odd Bits</a>
+      <a href="enquiries.html" class="admin-nav-link active">Enquiries</a>
+      <a href="settings.html" class="admin-nav-link">Settings</a>
+    </aside>
+
+    <main class="admin-main">
+      <h1 class="admin-heading">Enquiries</h1>
+      <p id="enq-count" style="font-size:0.85rem;color:var(--muted);margin-bottom:2rem;"></p>
+      <div class="admin-enquiries-list" id="enquiries-list">
+        <p style="color:var(--muted);font-style:italic;font-family:var(--font-display);">Loading…</p>
+      </div>
+    </main>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="../js/api.js"></script>
+  <script>
+    async function init() {
+      const ok = await Auth.check();
+      if (!ok) { location.href = 'login.html'; return; }
+      loadEnquiries();
+    }
+
+    async function loadEnquiries() {
+      try {
+        const list = await Enquiries.list();
+        const el = document.getElementById('enquiries-list');
+        const unread = list.filter(e => !e.read).length;
+        document.getElementById('enq-count').textContent =
+          `${list.length} total · ${unread} unread`;
+
+        if (list.length === 0) {
+          el.innerHTML = '<p style="color:var(--muted);font-style:italic;font-family:var(--font-display);">No enquiries yet.</p>';
+          return;
+        }
+
+        el.innerHTML = '';
+        list.forEach(enq => {
+          const card = document.createElement('div');
+          card.className = `enquiry-card ${enq.read ? '' : 'unread'}`;
+          card.id = `enq-${enq.id}`;
+          const date = new Date(enq.created_at).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
+          card.innerHTML = `
+            <div class="enquiry-header">
+              <div>
+                <span class="enquiry-name">${enq.name}</span>
+                &nbsp;
+                <span class="badge ${enq.read ? 'badge-read' : 'badge-unread'}">${enq.read ? 'Read' : 'New'}</span>
+              </div>
+              <span class="enquiry-date">${date}</span>
+            </div>
+            <div class="enquiry-meta">
+              <a href="mailto:${enq.email}" style="color:var(--rust);text-decoration:none;">${enq.email}</a>
+              &nbsp;·&nbsp; ${enq.subject}
+              ${enq.work_title ? `&nbsp;·&nbsp; Re: <em>${enq.work_title}</em>` : ''}
+            </div>
+            <div class="enquiry-message">${enq.message}</div>
+            <div class="admin-card-actions" style="margin-top:1rem;">
+              ${!enq.read ? `<button class="admin-btn" onclick="markRead('${enq.id}')">Mark as read</button>` : ''}
+              <a href="mailto:${enq.email}?subject=Re: ${encodeURIComponent(enq.subject)}" class="admin-btn">Reply via email</a>
+              <button class="admin-btn danger" onclick="deleteEnq('${enq.id}')">Delete</button>
+            </div>`;
+          el.appendChild(card);
+        });
+      } catch (e) {
+        document.getElementById('enquiries-list').innerHTML =
+          '<p style="color:var(--rust)">Failed to load enquiries.</p>';
+      }
+    }
+
+    async function markRead(id) {
+      try {
+        await Enquiries.markRead(id);
+        showToast('Marked as read.');
+        loadEnquiries();
+      } catch { showToast('Failed.'); }
+    }
+
+    async function deleteEnq(id) {
+      if (!confirm('Delete this enquiry?')) return;
+      try {
+        await Enquiries.delete(id);
+        showToast('Enquiry deleted.');
+        loadEnquiries();
+      } catch { showToast('Failed.'); }
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg; t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2800);
+    }
+
+    init();
+  </script>
+</body>
+</html>

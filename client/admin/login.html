@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Login — Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+  <nav class="nav">
+    <a href="../index.html" class="nav-logo">Studio</a>
+    <div class="nav-links">
+      <a href="../index.html">View site</a>
+    </div>
+  </nav>
+
+  <div class="admin-login-wrap">
+    <div class="admin-login-card">
+      <h1>Admin</h1>
+      <p>Enter your password to manage the studio.</p>
+      <form id="login-form" class="upload-form">
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" placeholder="••••••••" required autofocus />
+        </div>
+        <p class="login-error" id="login-error">Incorrect password. Try again.</p>
+        <button type="submit" class="form-submit">Sign in</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script>
+    // Redirect if already logged in
+    Auth.check().then(ok => { if (ok) location.href = 'index.html'; });
+
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = e.target.querySelector('button');
+      const errEl = document.getElementById('login-error');
+      btn.textContent = 'Signing in…';
+      btn.disabled = true;
+      errEl.style.display = 'none';
+      try {
+        await Auth.login(document.getElementById('password').value);
+        location.href = 'index.html';
+      } catch {
+        errEl.style.display = 'block';
+        btn.textContent = 'Sign in';
+        btn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
