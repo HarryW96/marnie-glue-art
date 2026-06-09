@@ -71,20 +71,6 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', env: process.env.NODE_ENV });
 });
 
-// Temporary debug endpoint — remove after confirming volume is working
-app.get('/api/debug/volume', require('./middleware/auth').requireAuth, (req, res) => {
-  const fs   = require('fs');
-  const path = require('path');
-  const dbPath = process.env.DB_PATH || '(not set)';
-  const dir    = path.dirname(dbPath);
-  let files = [];
-  try { files = fs.readdirSync(dir).map(f => {
-    const s = fs.statSync(path.join(dir, f));
-    return { name: f, size: s.size, modified: s.mtime };
-  }); } catch (e) { files = [`error reading dir: ${e.message}`]; }
-  res.json({ DB_PATH: dbPath, dir, exists: fs.existsSync(dbPath), files });
-});
-
 // ── Serve frontend (production) ──────────────────────────────────────────────
 // In development, serve client/ statically for convenience.
 // In production on Railway, you can either:
