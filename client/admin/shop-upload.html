@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Add Work — Studio Admin</title>
+  <title>Add Item — Admin</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet" />
@@ -20,19 +20,22 @@
     <aside class="admin-sidebar">
       <p class="admin-sidebar-title">Manage</p>
       <a href="index.html" class="admin-nav-link">All Works</a>
-      <a href="upload.html" class="admin-nav-link active">Add New Work</a>
+      <a href="upload.html" class="admin-nav-link">Add New Work</a>
       <a href="categories.html" class="admin-nav-link">Categories</a>
-      <a href="shop.html" class="admin-nav-link">Prints &amp; Odd Bits</a>
+      <a href="shop.html" class="admin-nav-link active">Prints &amp; Odd Bits</a>
       <a href="enquiries.html" class="admin-nav-link">Enquiries</a>
       <a href="settings.html" class="admin-nav-link">Settings</a>
     </aside>
 
     <main class="admin-main">
       <div class="upload-section">
-        <h1 class="admin-heading">Add New Work</h1>
+        <div class="back-bar" style="padding:0 0 1.5rem;">
+          <a href="shop.html" class="back-link">&larr; Prints &amp; Odd Bits</a>
+        </div>
+        <h1 class="admin-heading">Add New Item</h1>
 
         <div id="upload-success" class="admin-success" style="margin-bottom:1.5rem;">
-          Work saved successfully. <a href="index.html" style="color:var(--rust)">View all works →</a>
+          Item saved. <a href="shop.html" style="color:var(--rust)">View all items →</a>
         </div>
 
         <form class="upload-form" id="upload-form" enctype="multipart/form-data">
@@ -50,44 +53,33 @@
 
           <div class="form-group">
             <label for="title">Title *</label>
-            <input type="text" id="title" name="title" placeholder="e.g. Sediment I" required />
+            <input type="text" id="title" name="title" placeholder="e.g. Tender Study No.3" required />
           </div>
 
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
             <div class="form-group">
-              <label for="year">Year *</label>
-              <input type="text" id="year" name="year" placeholder="2024" required />
+              <label for="price">Price</label>
+              <input type="text" id="price" name="price" placeholder="e.g. £45 or On enquiry" />
             </div>
             <div class="form-group">
-              <label for="category">Category *</label>
-              <select id="category" name="category">
-                <option value="">Loading…</option>
-              </select>
+              <label for="edition">Edition</label>
+              <input type="text" id="edition" name="edition" placeholder="e.g. Edition of 50 or 1/1" />
             </div>
           </div>
 
           <div class="form-group">
-            <label for="medium">Medium</label>
-            <input type="text" id="medium" name="medium" placeholder="e.g. Stoneware, iron oxide, found slate" />
-          </div>
-
-          <div class="form-group">
-            <label for="dimensions">Dimensions</label>
-            <input type="text" id="dimensions" name="dimensions" placeholder="e.g. 42 × 28 × 18 cm" />
+            <label for="dimensions">Dimensions / Size</label>
+            <input type="text" id="dimensions" name="dimensions" placeholder="e.g. A3 (42 × 30 cm)" />
           </div>
 
           <div class="form-group">
             <label for="description">Description</label>
-            <textarea id="description" name="description" rows="4" placeholder="Notes on the work, materials, process..."></textarea>
+            <textarea id="description" name="description" rows="3" placeholder="Medium, paper type, notes on the piece..."></textarea>
           </div>
 
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
             <div class="form-group">
-              <label for="price">Price / Status</label>
-              <input type="text" id="price" name="price" placeholder="e.g. £1,400 or Sold" />
-            </div>
-            <div class="form-group">
-              <label for="available">Available for sale?</label>
+              <label for="available">Available?</label>
               <select id="available" name="available">
                 <option value="1">Yes</option>
                 <option value="0">No / Sold</option>
@@ -95,9 +87,15 @@
             </div>
           </div>
 
-          <div style="display:flex;gap:1rem;align-items:center;">
-            <button type="submit" class="form-submit" id="submit-btn">Save work</button>
-            <a href="index.html" style="font-size:0.8rem;color:var(--muted);text-decoration:none;">Cancel</a>
+          <div style="padding:1.25rem;background:var(--cream-dark);border-left:3px solid var(--sand);margin-top:0.5rem;">
+            <strong style="display:block;margin-bottom:0.4rem;font-size:0.82rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--deep-brown);">Shopify Buy Button</strong>
+            <p style="font-size:0.82rem;color:var(--muted);line-height:1.6;margin-bottom:0.75rem;">Optional. Paste embed code from Shopify (Sales channels → Buy Button). Leave blank to show an enquiry link instead.</p>
+            <textarea id="shopify_embed" name="shopify_embed" rows="3" style="font-family:monospace;font-size:0.78rem;" placeholder="<!-- Shopify Buy Button embed code -->"></textarea>
+          </div>
+
+          <div style="display:flex;gap:1rem;align-items:center;margin-top:1.5rem;">
+            <button type="submit" class="form-submit" id="submit-btn">Save item</button>
+            <a href="shop.html" style="font-size:0.8rem;color:var(--muted);text-decoration:none;">Cancel</a>
           </div>
 
         </form>
@@ -109,14 +107,6 @@
   <script>
     Auth.check().then(ok => { if (!ok) location.href = 'login.html'; });
 
-    // Populate category dropdown from API
-    Categories.list().then(cats => {
-      const sel = document.getElementById('category');
-      sel.innerHTML = cats.map(c => `<option value="${c.slug}">${c.name}</option>`).join('');
-      if (cats.length === 0) sel.innerHTML = '<option value="">No categories yet — add one first</option>';
-    }).catch(() => {});
-
-    // Image previews — multiple files
     const imageInput = document.getElementById('image-input');
     const dropzone   = document.getElementById('dropzone');
     const preview    = document.getElementById('upload-preview');
@@ -152,25 +142,21 @@
       });
     }
 
-    // Form submit
     document.getElementById('upload-form').addEventListener('submit', async e => {
       e.preventDefault();
       const btn = document.getElementById('submit-btn');
-      btn.textContent = 'Uploading…';
-      btn.disabled = true;
-
+      btn.textContent = 'Uploading…'; btn.disabled = true;
       try {
         const fd = new FormData(e.target);
-        await Works.create(fd);
+        await Shop.create(fd);
         document.getElementById('upload-success').style.display = 'block';
         e.target.reset();
         preview.innerHTML = '';
         window.scrollTo(0, 0);
       } catch (err) {
-        alert('Failed to save work: ' + err.message);
+        alert('Failed to save item: ' + err.message);
       } finally {
-        btn.textContent = 'Save work';
-        btn.disabled = false;
+        btn.textContent = 'Save item'; btn.disabled = false;
       }
     });
   </script>

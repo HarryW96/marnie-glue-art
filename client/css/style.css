@@ -1170,3 +1170,212 @@ body {
   font-size: 0.8rem; letter-spacing: 0.1em;
   margin: 0;
 }
+
+/* ── Shop ── */
+.shop-hero {
+  padding: 5rem 3rem 3rem;
+}
+
+.shop-hero-title {
+  font-family: var(--font-display);
+  font-size: clamp(2.8rem, 7vw, 5rem);
+  font-weight: 300;
+  color: var(--deep-brown);
+  line-height: 1.1;
+  margin-bottom: 1.5rem;
+}
+
+.shop-grid {
+  padding: 0 3rem 6rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1.75rem;
+}
+
+.shop-card {
+  cursor: pointer;
+  animation: fadeUp 0.5s ease both;
+}
+
+.shop-card-image-wrap {
+  position: relative;
+  overflow: hidden;
+  background: var(--cream-dark);
+}
+
+.shop-card-image-wrap img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.4s ease;
+}
+
+.shop-card:hover .shop-card-image-wrap img { transform: scale(1.03); }
+
+.shop-card-placeholder {
+  width: 100%;
+  aspect-ratio: 1;
+  background: var(--blush);
+  position: relative;
+}
+
+.shop-card-info { padding: 0.7rem 0 0; }
+
+.shop-card-title {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  color: var(--deep-brown);
+  margin-bottom: 0.15rem;
+  line-height: 1.3;
+}
+
+.shop-card-price {
+  font-size: 0.85rem;
+  color: var(--rust);
+  font-weight: 400;
+}
+
+.shop-card-edition {
+  font-size: 0.7rem;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  margin-top: 0.1rem;
+  text-transform: uppercase;
+}
+
+/* Shop Modal */
+.shop-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(28, 20, 14, 0.8);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.shop-modal-close {
+  position: fixed;
+  top: 1.5rem;
+  right: 2rem;
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.8);
+  font-size: 2.5rem;
+  cursor: pointer;
+  line-height: 1;
+  z-index: 201;
+  transition: color 0.15s;
+}
+.shop-modal-close:hover { color: white; }
+
+.shop-modal-inner {
+  background: var(--cream);
+  max-width: 860px;
+  width: 100%;
+  max-height: 88vh;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.shop-modal-images { background: var(--cream-dark); }
+
+.shop-modal-images > img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  display: block;
+}
+
+.shop-modal-images .shop-card-placeholder { aspect-ratio: 1; }
+
+.shop-modal-thumbs {
+  display: flex;
+  gap: 3px;
+  padding: 3px;
+  background: var(--sand);
+}
+
+.shop-modal-thumb {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: border-color 0.15s;
+  display: block;
+}
+.shop-modal-thumb.active { border-color: var(--rust); }
+
+.shop-modal-info {
+  padding: 2.25rem 2rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.shop-modal-edition {
+  font-size: 0.68rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 0.5rem;
+}
+
+.shop-modal-title {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  font-weight: 300;
+  color: var(--deep-brown);
+  margin-bottom: 0.6rem;
+  line-height: 1.2;
+}
+
+.shop-modal-price {
+  font-size: 1.3rem;
+  color: var(--rust);
+  margin-bottom: 1.25rem;
+}
+
+.shop-modal-dims {
+  font-size: 0.78rem;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+  margin-bottom: 0.9rem;
+}
+
+.shop-modal-desc {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 0.95rem;
+  color: var(--warm-brown);
+  line-height: 1.7;
+  margin-bottom: 1.5rem;
+  flex: 1;
+}
+
+.shop-enquire {
+  display: inline-block;
+  padding: 0.8rem 1.75rem;
+  background: var(--deep-brown);
+  color: var(--cream);
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: background 0.2s;
+  text-align: center;
+  margin-top: auto;
+}
+.shop-enquire:hover { background: var(--rust); }
+
+@media (max-width: 700px) {
+  .shop-modal-inner { grid-template-columns: 1fr; }
+  .shop-modal-images > img { aspect-ratio: 4/3; }
+  .shop-grid { padding: 0 1.5rem 4rem; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1rem; }
+  .shop-hero { padding: 3rem 1.5rem 2rem; }
+}
+

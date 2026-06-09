@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prints &amp; Odd Bits</title>
+  <link rel="icon" type="image/png" href="/client/img/favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <meta name="description" content="" />
+  <meta property="og:site_name" content="Studio" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="" />
+  <meta property="og:description" content="" />
+  <meta property="og:image" content="" />
+  <meta property="og:url" content="" />
+  <meta name="twitter:card" content="summary_large_image" />
+</head>
+<body>
+  <nav class="nav">
+    <a href="index.html" class="nav-logo" id="nav-logo">Studio</a>
+    <div class="nav-links">
+      <a href="index.html">Works</a>
+      <a href="shop.html" class="active">Shop</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+    </div>
+    <a href="admin/index.html" class="nav-admin" title="Admin">&#9654;</a>
+  </nav>
+
+  <header class="shop-hero">
+    <p class="hero-sub">Small works, prints &amp; original multiples</p>
+    <h1 class="shop-hero-title">Prints &amp; Odd Bits</h1>
+    <div class="hero-line"></div>
+  </header>
+
+  <main class="shop-grid" id="shop-grid">
+    <p class="gallery-empty" style="padding:4rem 0;color:var(--muted);font-style:italic;font-family:var(--font-display);font-size:1.2rem;">Loading…</p>
+  </main>
+
+  <footer class="footer">
+    <p>© <span id="year"></span> <span id="footer-name">Studio</span>. All rights reserved.</p>
+    <p class="footer-note">Available for commissions &amp; exhibitions.</p>
+  </footer>
+
+  <!-- Item detail modal -->
+  <div class="shop-modal-overlay" id="shop-modal" style="display:none;">
+    <button class="shop-modal-close" id="modal-close" aria-label="Close">×</button>
+    <div class="shop-modal-inner" id="modal-inner"></div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    Settings.get().then(s => {
+      if (s.artist_name) {
+        document.getElementById('nav-logo').textContent    = s.artist_name;
+        document.getElementById('footer-name').textContent = s.artist_name;
+      }
+      setPageMeta({
+        title: `Shop — ${s.artist_name || 'Studio'}`,
+        description: `Prints, small works and original multiples by ${s.artist_name || 'the artist'}.`,
+        image: s.portrait_url || '',
+      });
+    }).catch(() => {});
+
+    async function init() {
+      try {
+        const items = await Shop.list();
+        renderGrid(items);
+      } catch {
+        document.getElementById('shop-grid').innerHTML =
+          '<p class="gallery-empty">Could not load shop. Make sure the server is running.</p>';
+      }
+    }
+
+    function renderGrid(items) {
+      const grid = document.getElementById('shop-grid');
+      grid.innerHTML = '';
+      if (items.length === 0) {
+        grid.innerHTML = '<p class="gallery-empty" style="grid-column:1/-1;padding:4rem 0;">Nothing here yet — check back soon.</p>';
+        return;
+      }
+      items.forEach((item, i) => {
+        const card = document.createElement('div');
+        card.className = 'shop-card';
+        card.style.animationDelay = `${i * 0.05}s`;
+        const coverImg = item.images?.[0];
+        const soldBadge = !item.available ? '<div class="sold-badge">Sold</div>' : '';
+        const imgHtml = coverImg
+          ? `<div class="shop-card-image-wrap"><img src="${cloudinaryUrl(coverImg.image_url, { width: 500 })}" alt="${escHtml(item.title)}" loading="lazy" />${soldBadge}</div>`
+          : `<div class="shop-card-image-wrap"><div class="shop-card-placeholder">${soldBadge}</div></div>`;
+        card.innerHTML = `
+          ${imgHtml}
+          <div class="shop-card-info">
+            <div class="shop-card-title">${escHtml(item.title)}</div>
+            <div class="shop-card-price">${escHtml(item.price)}</div>
+            ${item.edition ? `<div class="shop-card-edition">${escHtml(item.edition)}</div>` : ''}
+          </div>`;
+        card.addEventListener('click', () => openModal(item));
+        grid.appendChild(card);
+      });
+    }
+
+    function openModal(item) {
+      const overlay = document.getElementById('shop-modal');
+      const inner   = document.getElementById('modal-inner');
+      const images  = item.images || [];
+
+      const thumbsHtml = images.length > 1
+        ? `<div class="shop-modal-thumbs">${images.map((img, i) =>
+            `<img class="shop-modal-thumb ${i === 0 ? 'active' : ''}" data-index="${i}"
+                  src="${cloudinaryUrl(img.image_url, { width: 160 })}" alt="" />`
+          ).join('')}</div>`
+        : '';
+
+      const mainImgHtml = images.length > 0
+        ? `<img id="modal-main-img" src="${cloudinaryUrl(images[0].image_url, { width: 900 })}" alt="${escHtml(item.title)}" />`
+        : `<div class="shop-card-placeholder" style="aspect-ratio:1;"></div>`;
+
+      const soldBadgeInline = !item.available
+        ? `<span class="work-sold-notice" style="display:inline-block;margin-bottom:1rem;">This piece has sold</span>`
+        : '';
+
+      let actionHtml = '';
+      if (item.available) {
+        if (item.shopify_embed) {
+          actionHtml = `<div id="modal-shopify-embed" style="margin-top:auto;"></div>`;
+        } else {
+          actionHtml = `<a href="contact.html?item=${encodeURIComponent(item.title)}" class="shop-enquire" style="margin-top:auto;">Enquire about this piece</a>`;
+        }
+      }
+
+      inner.innerHTML = `
+        <div class="shop-modal-images">
+          ${mainImgHtml}
+          ${thumbsHtml}
+        </div>
+        <div class="shop-modal-info">
+          ${item.edition ? `<p class="shop-modal-edition">${escHtml(item.edition)}</p>` : ''}
+          <h2 class="shop-modal-title">${escHtml(item.title)}</h2>
+          <p class="shop-modal-price">${escHtml(item.price)}</p>
+          ${item.dimensions ? `<p class="shop-modal-dims">${escHtml(item.dimensions)}</p>` : ''}
+          ${item.description ? `<p class="shop-modal-desc">${escHtml(item.description)}</p>` : ''}
+          ${soldBadgeInline}
+          ${actionHtml}
+        </div>`;
+
+      if (item.available && item.shopify_embed) {
+        const embedDiv = document.getElementById('modal-shopify-embed');
+        if (embedDiv) injectEmbed(embedDiv, item.shopify_embed);
+      }
+
+      inner.querySelectorAll('.shop-modal-thumb').forEach(thumb => {
+        thumb.addEventListener('click', () => {
+          const idx = parseInt(thumb.dataset.index);
+          const mainImg = document.getElementById('modal-main-img');
+          if (mainImg) mainImg.src = cloudinaryUrl(images[idx].image_url, { width: 900 });
+          inner.querySelectorAll('.shop-modal-thumb').forEach((t, i) => t.classList.toggle('active', i === idx));
+        });
+      });
+
+      overlay.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+      document.getElementById('shop-modal').style.display = 'none';
+      document.body.style.overflow = '';
+    }
+
+    document.getElementById('modal-close').addEventListener('click', closeModal);
+    document.getElementById('shop-modal').addEventListener('click', e => {
+      if (e.target === e.currentTarget) closeModal();
+    });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') closeModal();
+    });
+
+    function injectEmbed(container, html) {
+      const tmp = document.createElement('div');
+      tmp.innerHTML = html;
+      Array.from(tmp.childNodes).forEach(node => {
+        if (node.nodeName === 'SCRIPT') {
+          const s = document.createElement('script');
+          if (node.src) { s.src = node.src; s.async = true; }
+          else s.textContent = node.textContent;
+          container.appendChild(s);
+        } else {
+          container.appendChild(node.cloneNode(true));
+        }
+      });
+    }
+
+    function escHtml(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    init();
+  </script>
+</body>
+</html>

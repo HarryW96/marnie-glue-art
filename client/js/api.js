@@ -163,6 +163,44 @@ const Enquiries = {
   delete: (id)   => apiFetch(`/enquiries/${id}`, { method: 'DELETE' }),
 };
 
+// ── Shop ─────────────────────────────────────────────────────────────────────
+
+const Shop = {
+  list: () => apiFetch('/shop'),
+  get:  (id) => apiFetch(`/shop/${id}`),
+
+  create(formData) {
+    return fetch(`${API_BASE}/shop`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: formData,
+    }).then(async res => {
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      return data;
+    });
+  },
+
+  update: (id, data) => apiFetch(`/shop/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  delete: (id)       => apiFetch(`/shop/${id}`, { method: 'DELETE' }),
+
+  addImages(id, formData) {
+    return fetch(`${API_BASE}/shop/${id}/images`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: formData,
+    }).then(async res => {
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      return data;
+    });
+  },
+
+  deleteImage:   (id, imageId) => apiFetch(`/shop/${id}/images/${imageId}`, { method: 'DELETE' }),
+  reorderImages: (id, order)   => apiFetch(`/shop/${id}/images/reorder`, { method: 'PATCH', body: JSON.stringify({ order }) }),
+  reorder:       (order)       => apiFetch('/shop/batch/reorder', { method: 'PATCH', body: JSON.stringify({ order }) }),
+};
+
 // ── Auth ─────────────────────────────────────────────────────────────────────
 
 const Auth = {

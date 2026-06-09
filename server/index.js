@@ -11,6 +11,7 @@ const authRouter       = require('./routes/auth');
 const settingsRouter   = require('./routes/settings');
 const enquiriesRouter  = require('./routes/enquiries');
 const categoriesRouter = require('./routes/categories');
+const shopRouter       = require('./routes/shop');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -34,6 +35,7 @@ app.use('/api/auth',       authRouter);
 app.use('/api/settings',   settingsRouter);
 app.use('/api/enquiries',  enquiriesRouter);
 app.use('/api/categories', categoriesRouter);
+app.use('/api/shop',       shopRouter);
 
 // ── Health check ─────────────────────────────────────────────────────────────
 

@@ -91,6 +91,32 @@ function migrate(db) {
     db.exec(`ALTER TABLE works ADD COLUMN featured INTEGER DEFAULT 0`);
   } catch (_) { /* column already exists */ }
 
+  // Shop items (prints, small works, odd bits)
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS shop_items (
+      id            TEXT PRIMARY KEY,
+      title         TEXT NOT NULL,
+      price         TEXT DEFAULT 'On enquiry',
+      description   TEXT DEFAULT '',
+      dimensions    TEXT DEFAULT '',
+      edition       TEXT DEFAULT '',
+      available     INTEGER DEFAULT 1,
+      shopify_embed TEXT DEFAULT '',
+      sort_order    INTEGER DEFAULT 0,
+      created_at    TEXT DEFAULT (datetime('now')),
+      updated_at    TEXT DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS shop_images (
+      id          TEXT PRIMARY KEY,
+      item_id     TEXT NOT NULL REFERENCES shop_items(id) ON DELETE CASCADE,
+      image_url   TEXT NOT NULL,
+      image_id    TEXT NOT NULL,
+      sort_order  INTEGER DEFAULT 0,
+      created_at  TEXT DEFAULT (datetime('now'))
+    );
+  `);
+
   // Collection photos (press shots, exhibition images) per category
   db.exec(`
     CREATE TABLE IF NOT EXISTS collection_images (
